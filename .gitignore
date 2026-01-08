@@ -21,6 +21,7 @@ src-tauri/target/
 # OS files
 .DS_Store
 Thumbs.db
+nul
 
 # Logs
 *.log
