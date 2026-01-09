@@ -1,12 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { TitleBar } from "@/components/common/TitleBar";
 import { ToastContainer } from "@/components/common/Toast";
+import { Navigation } from "@/components/Navigation";
 import { Dashboard } from "@/components/Dashboard";
+import { TimerView } from "@/components/Timer";
 import { initializeDatabase } from "@/lib/initDatabase";
 import { checkAndProcessNewDay } from "@/lib/dailyResolution";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { useQuestsStore } from "@/stores/questsStore";
+import { useNavigationStore } from "@/stores/navigationStore";
 
 function LoadingScreen(): JSX.Element {
   return (
@@ -51,6 +54,7 @@ function App(): JSX.Element {
   const fetchPlayer = usePlayerStore((state) => state.fetchPlayer);
   const fetchSkills = useSkillsStore((state) => state.fetchSkills);
   const fetchQuests = useQuestsStore((state) => state.fetchQuests);
+  const activeView = useNavigationStore((state) => state.activeView);
 
   const initialize = useCallback(async (): Promise<void> => {
     setInitializing(true);
@@ -93,6 +97,9 @@ function App(): JSX.Element {
       {/* Custom title bar */}
       <TitleBar />
 
+      {/* Navigation tabs */}
+      <Navigation />
+
       {/* Main content area */}
       <main className="flex-1 p-6 overflow-auto">
         {initializing ? (
@@ -100,7 +107,10 @@ function App(): JSX.Element {
         ) : error ? (
           <ErrorScreen message={error} onRetry={initialize} />
         ) : (
-          <Dashboard />
+          <>
+            {activeView === "dashboard" && <Dashboard />}
+            {activeView === "timer" && <TimerView />}
+          </>
         )}
       </main>
 

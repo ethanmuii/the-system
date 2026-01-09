@@ -237,6 +237,48 @@ body {
     color: var(--sl-text-primary);
   }
 
+  /* Navigation tabs */
+  .nav-tab {
+    padding: 12px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    font-size: var(--text-small);
+    color: var(--sl-text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .nav-tab:hover {
+    color: var(--sl-text-primary);
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  .nav-tab.active {
+    color: var(--sl-blue-ice);
+    border-bottom-color: var(--sl-blue-glow);
+  }
+
+  /* Timer display */
+  .timer-display {
+    font-family: var(--font-mono);
+    font-size: var(--text-display);
+    color: var(--sl-text-primary);
+    letter-spacing: 0.05em;
+  }
+
+  .timer-display.running {
+    color: var(--sl-blue-ice);
+    text-shadow:
+      0 0 8px var(--sl-blue-glow),
+      0 0 16px rgba(59, 130, 246, 0.3);
+  }
+
   /* Difficulty badges */
   .badge-easy {
     background: rgba(16, 185, 129, 0.2);

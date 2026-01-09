@@ -2,6 +2,7 @@
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type TimeLogSource = "timer" | "manual";
+export type View = "dashboard" | "timer";
 
 export interface Player {
   id: 1;
