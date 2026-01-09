@@ -2,6 +2,7 @@
 // Custom hook wrapping playerStore with computed values
 
 import { usePlayerStore } from "@/stores/playerStore";
+import { useSkillsStore } from "@/stores/skillsStore";
 import {
   calculateLevel,
   visualProgress,
@@ -21,10 +22,10 @@ interface UsePlayerReturn {
   fetchPlayer: () => Promise<void>;
   updateHealth: (newHealth: number) => Promise<void>;
   updateStreak: (newStreak: number) => Promise<void>;
-  addXP: (amount: number) => Promise<void>;
   setDebuffed: (isDebuffed: boolean) => Promise<void>;
 
   // Computed values
+  overallXP: number;
   level: number;
   progress: number;
   xpToNextLevel: number;
@@ -37,15 +38,23 @@ interface UsePlayerReturn {
 
 export function usePlayer(): UsePlayerReturn {
   const store = usePlayerStore();
+  const skillsStore = useSkillsStore();
 
-  // Compute derived values
-  const level = store.player ? calculateLevel(store.player.overallXP) : 0;
-  const progress = store.player ? visualProgress(store.player.overallXP) : 5;
-  const currentLevelXP = xpRequiredForLevel(level);
-  const nextLevelXP = xpRequiredForLevel(level + 1);
-  const xpToNextLevel = store.player
-    ? nextLevelXP - store.player.overallXP
-    : nextLevelXP;
+  // Calculate overall XP from sum of all skills (not from player.overallXP)
+  const overallXP = skillsStore.skills.reduce((sum, s) => sum + s.totalXP, 0);
+
+  // Display level starting at 1 (add 1 to calculated level)
+  const calculatedLevel = calculateLevel(overallXP);
+  const level = calculatedLevel + 1;
+
+  // Progress uses the raw calculated level for accurate progress bar
+  const progress = visualProgress(overallXP);
+
+  // XP thresholds based on calculated level (not display level)
+  const currentLevelXP = xpRequiredForLevel(calculatedLevel);
+  const nextLevelXP = xpRequiredForLevel(calculatedLevel + 1);
+  const xpToNextLevel = nextLevelXP - overallXP;
+
   const streakMultiplier = store.player
     ? getStreakMultiplier(store.player.currentStreak)
     : 1.0;
@@ -61,10 +70,10 @@ export function usePlayer(): UsePlayerReturn {
     fetchPlayer: store.fetchPlayer,
     updateHealth: store.updateHealth,
     updateStreak: store.updateStreak,
-    addXP: store.addXP,
     setDebuffed: store.setDebuffed,
 
     // Computed
+    overallXP,
     level,
     progress,
     xpToNextLevel,

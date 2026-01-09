@@ -13,6 +13,7 @@ export function PlayerStats(): JSX.Element {
     loading,
     level,
     progress,
+    overallXP,
     currentLevelXP,
     nextLevelXP,
     streakMultiplier,
@@ -37,7 +38,7 @@ export function PlayerStats(): JSX.Element {
     );
   }
 
-  const xpIntoLevel = player.overallXP - currentLevelXP;
+  const xpIntoLevel = overallXP - currentLevelXP;
   const xpNeeded = nextLevelXP - currentLevelXP;
 
   return (

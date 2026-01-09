@@ -1,9 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { TitleBar } from "@/components/common/TitleBar";
+import { ToastContainer } from "@/components/common/Toast";
 import { Dashboard } from "@/components/Dashboard";
 import { initializeDatabase } from "@/lib/initDatabase";
+import { checkAndProcessNewDay } from "@/lib/dailyResolution";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useSkillsStore } from "@/stores/skillsStore";
+import { useQuestsStore } from "@/stores/questsStore";
 
 function LoadingScreen(): JSX.Element {
   return (
@@ -47,6 +50,7 @@ function App(): JSX.Element {
 
   const fetchPlayer = usePlayerStore((state) => state.fetchPlayer);
   const fetchSkills = useSkillsStore((state) => state.fetchSkills);
+  const fetchQuests = useQuestsStore((state) => state.fetchQuests);
 
   const initialize = useCallback(async (): Promise<void> => {
     setInitializing(true);
@@ -55,11 +59,15 @@ function App(): JSX.Element {
     try {
       console.log("Step 1: Initializing database...");
       await initializeDatabase();
-      console.log("Step 2: Database initialized, fetching data...");
+      console.log("Step 2: Database initialized, processing daily resolution...");
+
+      // Process daily resolution (generate recurring quests for today)
+      await checkAndProcessNewDay();
+      console.log("Step 3: Daily resolution complete, fetching data...");
 
       // Fetch initial data
-      await Promise.all([fetchPlayer(), fetchSkills()]);
-      console.log("Step 3: Data fetched successfully");
+      await Promise.all([fetchPlayer(), fetchSkills(), fetchQuests()]);
+      console.log("Step 4: Data fetched successfully");
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -74,7 +82,7 @@ function App(): JSX.Element {
     } finally {
       setInitializing(false);
     }
-  }, [fetchPlayer, fetchSkills]);
+  }, [fetchPlayer, fetchSkills, fetchQuests]);
 
   useEffect(() => {
     initialize();
@@ -95,6 +103,9 @@ function App(): JSX.Element {
           <Dashboard />
         )}
       </main>
+
+      {/* Toast notifications */}
+      <ToastContainer />
     </div>
   );
 }

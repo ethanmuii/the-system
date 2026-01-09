@@ -94,3 +94,30 @@ export interface TimerState {
   pauseStartTime: Date | null;
   totalPauseSeconds: number;
 }
+
+// Quest input types for CRUD operations
+export interface CreateQuestInput {
+  skillId: string;
+  title: string;
+  difficulty: Difficulty;
+  dueDate: string; // YYYY-MM-DD format
+  isRecurring: boolean;
+  recurrencePattern: RecurrencePattern | null;
+}
+
+export interface UpdateQuestInput {
+  title?: string;
+  skillId?: string;
+  difficulty?: Difficulty;
+  dueDate?: string; // YYYY-MM-DD format
+  isRecurring?: boolean;
+  recurrencePattern?: RecurrencePattern | null;
+}
+
+// Toast notification type
+export interface Toast {
+  id: string;
+  message: string;
+  type: "success" | "info" | "warning" | "error";
+  duration?: number; // Default 3000ms
+}

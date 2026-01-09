@@ -1,10 +1,11 @@
 // src/components/Dashboard/Dashboard.tsx
-// Main dashboard layout combining player stats and skills grid
+// Main dashboard layout combining player stats, skills grid, and quests
 
 import { useSkills } from "@/hooks/useSkills";
 import { PlayerStats } from "./PlayerStats";
 import { SkillCard } from "@/components/Skills/SkillCard";
 import { SkillModal } from "@/components/Skills/SkillModal";
+import { QuestList } from "@/components/Quests";
 
 export function Dashboard(): JSX.Element {
   const { activeSkills, selectedSkill, selectSkill, loading } = useSkills();
@@ -53,6 +54,9 @@ export function Dashboard(): JSX.Element {
           ))}
         </div>
       </section>
+
+      {/* Quests Section */}
+      <QuestList />
 
       {/* Skill Modal */}
       <SkillModal skill={selectedSkill} onClose={() => selectSkill(null)} />
