@@ -63,9 +63,18 @@ export function QuestList(): JSX.Element {
 
       // Show toast notification
       addToast({
-        message: `+${result.xpAwarded} XP earned for ${skill?.name ?? "skill"}!`,
+        message: `+${result.xpAwarded} XP earned for ${result.skillName}!`,
         type: "success",
       });
+
+      // Show level-up toast if skill leveled up
+      if (result.leveledUp) {
+        addToast({
+          message: `${result.skillName} is now Level ${result.newLevel}!`,
+          type: "levelup",
+          duration: 6000,
+        });
+      }
     } catch (err) {
       console.error("Failed to complete quest:", err);
       addToast({

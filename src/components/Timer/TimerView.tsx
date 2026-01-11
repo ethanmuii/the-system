@@ -102,17 +102,22 @@ export function TimerView(): JSX.Element {
     );
 
     // Award XP to skill (updates skill totalXP and totalSeconds)
-    await addXPToSkill(stoppedSkillId, xpEarned, totalSeconds);
-
-    // Find skill name for toast
-    const skill = activeSkills.find((s) => s.id === stoppedSkillId);
-    const skillName = skill?.name ?? "Unknown";
+    const xpResult = await addXPToSkill(stoppedSkillId, xpEarned, totalSeconds);
 
     // Show XP toast
     addToast({
-      message: `+${formatXP(xpEarned)} XP earned for ${skillName}!`,
+      message: `+${formatXP(xpEarned)} XP earned for ${xpResult.skillName}!`,
       type: "success",
     });
+
+    // Show level-up toast if skill leveled up
+    if (xpResult.leveledUp) {
+      addToast({
+        message: `${xpResult.skillName} is now Level ${xpResult.newLevel}!`,
+        type: "levelup",
+        duration: 6000,
+      });
+    }
 
     // Handle recovery quest progress if debuffed
     if (isDebuffed) {
@@ -143,7 +148,7 @@ export function TimerView(): JSX.Element {
 
     // Reset pending skill
     setPendingSkillId(null);
-  }, [stop, player, isDebuffed, addXPToSkill, activeSkills, addToast, setDebuffed, updateHealth]);
+  }, [stop, player, isDebuffed, addXPToSkill, addToast, setDebuffed, updateHealth]);
 
   // Handle manual time entry
   const handleManualLog = useCallback(
@@ -162,22 +167,27 @@ export function TimerView(): JSX.Element {
       );
 
       // Award XP to skill
-      await addXPToSkill(pendingSkillId, xpEarned, totalSeconds);
-
-      // Find skill name for toast
-      const skill = activeSkills.find((s) => s.id === pendingSkillId);
-      const skillName = skill?.name ?? "Unknown";
+      const xpResult = await addXPToSkill(pendingSkillId, xpEarned, totalSeconds);
 
       // Show toast
       addToast({
-        message: `+${formatXP(xpEarned)} XP logged for ${skillName}!`,
+        message: `+${formatXP(xpEarned)} XP logged for ${xpResult.skillName}!`,
         type: "success",
       });
+
+      // Show level-up toast if skill leveled up
+      if (xpResult.leveledUp) {
+        addToast({
+          message: `${xpResult.skillName} is now Level ${xpResult.newLevel}!`,
+          type: "levelup",
+          duration: 6000,
+        });
+      }
 
       // Note: Manual time entry doesn't count toward recovery quest
       // Recovery requires timer usage to track consecutive hours
     },
-    [pendingSkillId, player, addXPToSkill, activeSkills, addToast]
+    [pendingSkillId, player, addXPToSkill, addToast]
   );
 
   // Determine which skill ID to show in selector

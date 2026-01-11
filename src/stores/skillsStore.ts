@@ -42,6 +42,17 @@ function mapDbRowToSkill(row: SkillDbRow): Skill {
   };
 }
 
+/**
+ * Result of adding XP to a skill
+ */
+export interface AddXPResult {
+  success: boolean;
+  leveledUp: boolean;
+  oldLevel: number;
+  newLevel: number;
+  skillName: string;
+}
+
 interface SkillsStore {
   // State
   skills: Skill[];
@@ -56,7 +67,7 @@ interface SkillsStore {
     skillId: string,
     xpAmount: number,
     seconds: number
-  ) => Promise<void>;
+  ) => Promise<AddXPResult>;
 }
 
 export const useSkillsStore = create<SkillsStore>((set, get) => ({
@@ -87,18 +98,28 @@ export const useSkillsStore = create<SkillsStore>((set, get) => ({
     set({ selectedSkillId: skillId });
   },
 
-  addXPToSkill: async (skillId: string, xpAmount: number, seconds: number) => {
+  addXPToSkill: async (skillId: string, xpAmount: number, seconds: number): Promise<AddXPResult> => {
     const { skills } = get();
     const skillIndex = skills.findIndex((s) => s.id === skillId);
 
+    const failResult: AddXPResult = {
+      success: false,
+      leveledUp: false,
+      oldLevel: 0,
+      newLevel: 0,
+      skillName: "",
+    };
+
     if (skillIndex === -1) {
       console.error("Skill not found:", skillId);
-      return;
+      return failResult;
     }
 
     const skill = skills[skillIndex];
+    const oldLevel = skill.level;
     const newTotalXP = skill.totalXP + xpAmount;
     const newTotalSeconds = skill.totalSeconds + seconds;
+    const newLevel = calculateLevel(newTotalXP);
 
     try {
       await execute(
@@ -111,7 +132,7 @@ export const useSkillsStore = create<SkillsStore>((set, get) => ({
         ...skill,
         totalXP: newTotalXP,
         totalSeconds: newTotalSeconds,
-        level: calculateLevel(newTotalXP),
+        level: newLevel,
         progress: visualProgress(newTotalXP),
         totalHours: newTotalSeconds / 3600,
       };
@@ -120,8 +141,17 @@ export const useSkillsStore = create<SkillsStore>((set, get) => ({
       updatedSkills[skillIndex] = updatedSkill;
 
       set({ skills: updatedSkills });
+
+      return {
+        success: true,
+        leveledUp: newLevel > oldLevel,
+        oldLevel,
+        newLevel,
+        skillName: skill.name,
+      };
     } catch (err) {
       console.error("Failed to add XP to skill:", err);
+      return failResult;
     }
   },
 }));

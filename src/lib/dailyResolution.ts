@@ -1,7 +1,9 @@
 // src/lib/dailyResolution.ts
-// Daily resolution logic for recurring quests and day transitions
+// Daily resolution logic for recurring quests, streak/health updates, and day transitions
 
 import { query, execute, generateId } from "@/lib/db";
+import { calculateDailyHealth, shouldEnterDebuff, HEALTH_CONFIG } from "@/lib/xpCalculator";
+import { createDailySnapshot } from "@/lib/snapshotService";
 import type { RecurrencePattern } from "@/types";
 
 interface RecurringQuestRow {
@@ -12,8 +14,33 @@ interface RecurringQuestRow {
   recurrence_pattern: string;
 }
 
-interface PlayerLastProcessedRow {
+interface PlayerRow {
+  current_streak: number;
+  longest_streak: number;
+  health: number;
+  is_debuffed: number;
   last_processed_date: string | null;
+}
+
+interface QuestCountRow {
+  total: number;
+  completed: number;
+}
+
+/**
+ * Result of daily resolution processing
+ */
+export interface DailyResolutionResult {
+  isNewDay: boolean;
+  yesterdayComplete: boolean;
+  questsCompleted: number;
+  questsTotal: number;
+  streakChange: "increment" | "reset" | "none";
+  newStreak: number;
+  healthChange: number;
+  newHealth: number;
+  enteredDebuff: boolean;
+  questsGenerated: number;
 }
 
 /**
@@ -21,6 +48,15 @@ interface PlayerLastProcessedRow {
  */
 function getTodayString(): string {
   return new Date().toISOString().split("T")[0];
+}
+
+/**
+ * Get yesterday's date as YYYY-MM-DD string
+ */
+function getYesterdayString(): string {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().split("T")[0];
 }
 
 /**
@@ -116,17 +152,65 @@ export async function generateRecurringQuests(date: Date): Promise<number> {
 }
 
 /**
- * Get the last processed date from player table
+ * Get player state from database
  */
-async function getLastProcessedDate(): Promise<string | null> {
+async function getPlayerState(): Promise<PlayerRow | null> {
   try {
-    const rows = await query<PlayerLastProcessedRow>(
-      "SELECT last_processed_date FROM player WHERE id = 1"
+    const rows = await query<PlayerRow>(
+      "SELECT current_streak, longest_streak, health, is_debuffed, last_processed_date FROM player WHERE id = 1"
     );
-    return rows[0]?.last_processed_date ?? null;
+    return rows[0] ?? null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Get quest completion counts for a specific date
+ */
+async function getQuestCountsForDate(date: string): Promise<{ total: number; completed: number }> {
+  const rows = await query<QuestCountRow>(
+    `SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed
+    FROM quests
+    WHERE due_date = ?`,
+    [date]
+  );
+  return {
+    total: rows[0]?.total ?? 0,
+    completed: rows[0]?.completed ?? 0,
+  };
+}
+
+/**
+ * Update player streak in database
+ */
+async function updatePlayerStreak(newStreak: number, longestStreak: number): Promise<void> {
+  await execute(
+    "UPDATE player SET current_streak = ?, longest_streak = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
+    [newStreak, longestStreak]
+  );
+}
+
+/**
+ * Update player health in database
+ */
+async function updatePlayerHealth(newHealth: number): Promise<void> {
+  await execute(
+    "UPDATE player SET health = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
+    [newHealth]
+  );
+}
+
+/**
+ * Set player debuffed state in database
+ */
+async function setPlayerDebuffed(isDebuffed: boolean): Promise<void> {
+  await execute(
+    "UPDATE player SET is_debuffed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
+    [isDebuffed ? 1 : 0]
+  );
 }
 
 /**
@@ -145,32 +229,135 @@ async function setLastProcessedDate(dateString: string): Promise<void> {
 
 /**
  * Check if a new day has started and process daily resolution
- * Returns true if a new day was processed
+ * Returns detailed result for notifications
  */
-export async function checkAndProcessNewDay(): Promise<boolean> {
+export async function checkAndProcessNewDay(): Promise<DailyResolutionResult> {
   const today = getTodayString();
-  const lastProcessedDate = await getLastProcessedDate();
+  const yesterday = getYesterdayString();
 
-  // If already processed today, skip
-  if (lastProcessedDate === today) {
-    return false;
+  // Default result for when no processing is needed
+  const noOpResult: DailyResolutionResult = {
+    isNewDay: false,
+    yesterdayComplete: true,
+    questsCompleted: 0,
+    questsTotal: 0,
+    streakChange: "none",
+    newStreak: 0,
+    healthChange: 0,
+    newHealth: 100,
+    enteredDebuff: false,
+    questsGenerated: 0,
+  };
+
+  const playerState = await getPlayerState();
+  if (!playerState) {
+    console.error("Could not fetch player state");
+    return noOpResult;
   }
 
-  console.log(`Processing new day: ${today} (last processed: ${lastProcessedDate ?? "never"})`);
+  // If already processed today, skip
+  if (playerState.last_processed_date === today) {
+    return {
+      ...noOpResult,
+      newStreak: playerState.current_streak,
+      newHealth: playerState.health,
+    };
+  }
+
+  console.log(`Processing new day: ${today} (last processed: ${playerState.last_processed_date ?? "never"})`);
 
   try {
-    // Generate recurring quests for today
+    // === Step 1: Check yesterday's quest completion ===
+    const yesterdayQuests = await getQuestCountsForDate(yesterday);
+    const hadQuestsYesterday = yesterdayQuests.total > 0;
+    const completedAllYesterday = hadQuestsYesterday
+      ? yesterdayQuests.completed === yesterdayQuests.total
+      : true; // No quests = nothing to miss
+
+    // === Step 2: Calculate streak change ===
+    let newStreak = playerState.current_streak;
+    let streakChange: "increment" | "reset" | "none" = "none";
+
+    // Only apply streak logic if this isn't the first day (has processed before)
+    // AND there were quests yesterday to evaluate
+    if (playerState.last_processed_date !== null && hadQuestsYesterday) {
+      if (completedAllYesterday) {
+        newStreak = playerState.current_streak + 1;
+        streakChange = "increment";
+      } else {
+        newStreak = 0;
+        streakChange = "reset";
+      }
+    }
+
+    const newLongestStreak = Math.max(playerState.longest_streak, newStreak);
+
+    // === Step 3: Calculate health change ===
+    let newHealth = playerState.health;
+    let healthChange = 0;
+
+    // Only apply health change if there were quests yesterday
+    if (playerState.last_processed_date !== null && hadQuestsYesterday) {
+      newHealth = calculateDailyHealth(playerState.health, completedAllYesterday);
+      healthChange = completedAllYesterday
+        ? HEALTH_CONFIG.dailyReward
+        : HEALTH_CONFIG.dailyPenalty;
+
+      // Clamp health
+      if (newHealth > HEALTH_CONFIG.max) {
+        healthChange = HEALTH_CONFIG.max - playerState.health;
+        newHealth = HEALTH_CONFIG.max;
+      }
+    }
+
+    // === Step 4: Check for debuff state ===
+    const wasDebuffed = playerState.is_debuffed === 1;
+    const shouldBeDebuffed = shouldEnterDebuff(newHealth);
+    const enteredDebuff = !wasDebuffed && shouldBeDebuffed;
+
+    // === Step 5: Update database ===
+    if (streakChange !== "none") {
+      await updatePlayerStreak(newStreak, newLongestStreak);
+    }
+
+    if (healthChange !== 0) {
+      await updatePlayerHealth(newHealth);
+    }
+
+    if (enteredDebuff) {
+      await setPlayerDebuffed(true);
+    }
+
+    // === Step 6: Create daily snapshot for yesterday ===
+    if (playerState.last_processed_date !== null) {
+      await createDailySnapshot(yesterday);
+    }
+
+    // === Step 7: Generate recurring quests for today ===
     const questsGenerated = await generateRecurringQuests(new Date());
     if (questsGenerated > 0) {
       console.log(`Generated ${questsGenerated} recurring quest(s) for today`);
     }
 
-    // Update the last processed date
+    // === Step 8: Update last processed date ===
     await setLastProcessedDate(today);
 
-    return true;
+    console.log(`Daily resolution complete: streak=${newStreak}, health=${newHealth}, quests=${questsGenerated}`);
+
+    return {
+      isNewDay: true,
+      yesterdayComplete: completedAllYesterday,
+      questsCompleted: yesterdayQuests.completed,
+      questsTotal: yesterdayQuests.total,
+      streakChange,
+      newStreak,
+      healthChange,
+      newHealth,
+      enteredDebuff,
+      questsGenerated,
+    };
   } catch (err) {
     console.error("Failed to process new day:", err);
-    return false;
+    return noOpResult;
   }
 }

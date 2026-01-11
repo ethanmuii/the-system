@@ -1,7 +1,7 @@
 // src/hooks/useQuests.ts
 // Custom hook wrapping questsStore with computed values
 
-import { useQuestsStore } from "@/stores/questsStore";
+import { useQuestsStore, CompleteQuestResult } from "@/stores/questsStore";
 import type { Quest, CreateQuestInput, UpdateQuestInput } from "@/types";
 
 interface UseQuestsReturn {
@@ -16,7 +16,7 @@ interface UseQuestsReturn {
   createQuest: (data: CreateQuestInput) => Promise<Quest>;
   updateQuest: (id: string, data: UpdateQuestInput) => Promise<void>;
   deleteQuest: (id: string) => Promise<void>;
-  completeQuest: (id: string) => Promise<{ xpAwarded: number; skillId: string }>;
+  completeQuest: (id: string) => Promise<CompleteQuestResult>;
   selectQuest: (id: string | null) => void;
 
   // Computed values

@@ -1,9 +1,11 @@
 // src/components/Skills/SkillCard.tsx
 // Individual skill card with level and XP progress
 
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { Skill } from "@/types";
 import { formatXP, xpRequiredForLevel } from "@/lib/xpCalculator";
+import { AnimatedNumber } from "@/components/common/AnimatedNumber";
 
 interface SkillCardProps {
   skill: Skill;
@@ -11,6 +13,20 @@ interface SkillCardProps {
 }
 
 export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
+  // Track level-up flash animation
+  const [isFlashing, setIsFlashing] = useState(false);
+  const prevLevelRef = useRef<number>(skill.level);
+
+  // Detect level-up and trigger flash
+  useEffect(() => {
+    if (prevLevelRef.current !== null && skill.level > prevLevelRef.current) {
+      setIsFlashing(true);
+      const timer = setTimeout(() => setIsFlashing(false), 1000);
+      return () => clearTimeout(timer);
+    }
+    prevLevelRef.current = skill.level;
+  }, [skill.level]);
+
   // Calculate XP breakdown for display
   const currentLevelXP = xpRequiredForLevel(skill.level);
   const nextLevelXP = xpRequiredForLevel(skill.level + 1);
@@ -19,7 +35,7 @@ export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
 
   return (
     <motion.div
-      className="glass-panel p-4 cursor-pointer"
+      className={`glass-panel p-4 cursor-pointer ${isFlashing ? "level-up-flash" : ""}`}
       style={{
         borderLeftWidth: "3px",
         borderLeftColor: skill.color,
@@ -74,7 +90,7 @@ export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
       {/* XP Text + Hours */}
       <div className="flex justify-between text-[var(--text-xs)] text-[var(--sl-text-muted)]">
         <span className="tabular-nums">
-          {formatXP(xpIntoLevel)} / {formatXP(xpNeeded)} XP
+          <AnimatedNumber value={xpIntoLevel} formatter={formatXP} storageKey={`skill-${skill.id}-xp`} /> / {formatXP(xpNeeded)} XP
         </span>
         <span className="tabular-nums">{skill.totalHours.toFixed(1)}h</span>
       </div>

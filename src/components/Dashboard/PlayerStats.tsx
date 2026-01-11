@@ -1,11 +1,13 @@
 // src/components/Dashboard/PlayerStats.tsx
 // Player stats panel showing overall level, health, streak, and today's XP
 
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { usePlayer } from "@/hooks/usePlayer";
 import { formatXP } from "@/lib/xpCalculator";
 import { HealthBar } from "./HealthBar";
 import { StreakDisplay } from "./StreakDisplay";
+import { AnimatedNumber } from "@/components/common/AnimatedNumber";
 
 export function PlayerStats(): JSX.Element {
   const {
@@ -19,6 +21,20 @@ export function PlayerStats(): JSX.Element {
     streakMultiplier,
     todayXP,
   } = usePlayer();
+
+  // Track level-up flash animation
+  const [isFlashing, setIsFlashing] = useState(false);
+  const prevLevelRef = useRef<number | null>(null);
+
+  // Detect level-up and trigger flash
+  useEffect(() => {
+    if (prevLevelRef.current !== null && level > prevLevelRef.current) {
+      setIsFlashing(true);
+      const timer = setTimeout(() => setIsFlashing(false), 1000);
+      return () => clearTimeout(timer);
+    }
+    prevLevelRef.current = level;
+  }, [level]);
 
   if (loading) {
     return (
@@ -45,7 +61,7 @@ export function PlayerStats(): JSX.Element {
     <div className="glass-panel p-6">
       {/* Row 1: Level + Health */}
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className={isFlashing ? "level-up-flash" : ""}>
           <span className="text-[var(--text-small)] uppercase tracking-wider text-[var(--sl-text-secondary)] block mb-1">
             Overall Level
           </span>
@@ -61,7 +77,7 @@ export function PlayerStats(): JSX.Element {
         <div className="flex justify-between text-[var(--text-small)] mb-2">
           <span className="text-[var(--sl-text-secondary)]">XP Progress</span>
           <span className="text-[var(--sl-text-muted)] tabular-nums">
-            {formatXP(xpIntoLevel)} / {formatXP(xpNeeded)} XP
+            <AnimatedNumber value={xpIntoLevel} formatter={formatXP} storageKey="player-xpIntoLevel" /> / {formatXP(xpNeeded)} XP
           </span>
         </div>
         <div className="xp-bar">
@@ -82,7 +98,7 @@ export function PlayerStats(): JSX.Element {
             Today
           </span>
           <span className="text-[var(--text-h3)] font-semibold text-[var(--sl-blue-ice)]">
-            +{formatXP(todayXP)} XP
+            +<AnimatedNumber value={todayXP} formatter={formatXP} storageKey="player-todayXP" /> XP
           </span>
         </div>
       </div>

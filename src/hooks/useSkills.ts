@@ -1,7 +1,7 @@
 // src/hooks/useSkills.ts
 // Custom hook wrapping skillsStore with computed values
 
-import { useSkillsStore } from "@/stores/skillsStore";
+import { useSkillsStore, AddXPResult } from "@/stores/skillsStore";
 import type { Skill } from "@/types";
 
 interface UseSkillsReturn {
@@ -18,7 +18,7 @@ interface UseSkillsReturn {
     skillId: string,
     xpAmount: number,
     seconds: number
-  ) => Promise<void>;
+  ) => Promise<AddXPResult>;
 
   // Computed values
   sortedSkills: Skill[];

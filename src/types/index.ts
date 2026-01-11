@@ -2,7 +2,7 @@
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type TimeLogSource = "timer" | "manual";
-export type View = "dashboard" | "timer";
+export type View = "dashboard" | "timer" | "journal";
 
 export interface Player {
   id: 1;
@@ -119,6 +119,6 @@ export interface UpdateQuestInput {
 export interface Toast {
   id: string;
   message: string;
-  type: "success" | "info" | "warning" | "error";
+  type: "success" | "info" | "warning" | "error" | "levelup";
   duration?: number; // Default 3000ms
 }

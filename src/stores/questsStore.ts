@@ -45,6 +45,17 @@ function mapDbRowToQuest(row: QuestDbRow): Quest {
   };
 }
 
+/**
+ * Result of completing a quest
+ */
+export interface CompleteQuestResult {
+  xpAwarded: number;
+  skillId: string;
+  skillName: string;
+  leveledUp: boolean;
+  newLevel: number;
+}
+
 interface QuestsStore {
   // State
   quests: Quest[];
@@ -57,7 +68,7 @@ interface QuestsStore {
   createQuest: (data: CreateQuestInput) => Promise<Quest>;
   updateQuest: (id: string, data: UpdateQuestInput) => Promise<void>;
   deleteQuest: (id: string) => Promise<void>;
-  completeQuest: (id: string) => Promise<{ xpAwarded: number; skillId: string }>;
+  completeQuest: (id: string) => Promise<CompleteQuestResult>;
   selectQuest: (id: string | null) => void;
 }
 
@@ -273,8 +284,8 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
         [id]
       );
 
-      // Award XP to the associated skill
-      await useSkillsStore.getState().addXPToSkill(quest.skillId, xpAwarded, 0);
+      // Award XP to the associated skill and get level-up info
+      const xpResult = await useSkillsStore.getState().addXPToSkill(quest.skillId, xpAwarded, 0);
 
       // Update local quest state
       const updatedQuest: Quest = {
@@ -288,7 +299,13 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
 
       set({ quests: updatedQuests });
 
-      return { xpAwarded, skillId: quest.skillId };
+      return {
+        xpAwarded,
+        skillId: quest.skillId,
+        skillName: xpResult.skillName,
+        leveledUp: xpResult.leveledUp,
+        newLevel: xpResult.newLevel,
+      };
     } catch (err) {
       console.error("Failed to complete quest:", err);
       throw err;

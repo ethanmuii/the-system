@@ -334,6 +334,30 @@ body {
   }
 }
 
+/* Level-up flash effect - more dramatic version */
+@keyframes level-up-flash {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+    transform: scale(1);
+  }
+  20% {
+    filter: brightness(2.2) drop-shadow(0 0 20px var(--sl-blue-glow));
+    transform: scale(1.08);
+  }
+  40% {
+    filter: brightness(1.6) drop-shadow(0 0 15px var(--sl-blue-glow));
+    transform: scale(1.04);
+  }
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+    transform: scale(1);
+  }
+}
+
+.level-up-flash {
+  animation: level-up-flash 1s var(--ease-out-expo);
+}
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
