@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { TitleBar } from "@/components/common/TitleBar";
 import { ToastContainer } from "@/components/common/Toast";
 import { Navigation } from "@/components/Navigation";
@@ -190,6 +191,20 @@ function App(): JSX.Element {
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Listen for navigation events from system tray menu
+  useEffect(() => {
+    const unlisten = listen<string>("navigate-to-view", (event) => {
+      const view = event.payload;
+      if (view === "timer" || view === "dashboard" || view === "journal") {
+        useNavigationStore.getState().setActiveView(view);
+      }
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   return (
     <div className="app-window min-h-screen flex flex-col">
