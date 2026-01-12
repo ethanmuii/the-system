@@ -208,41 +208,44 @@ function App(): JSX.Element {
   }, []);
 
   return (
-    <div className="app-window h-screen p-6 flex flex-col gap-3">
-      {/* Custom title bar - floats as its own card */}
+    <div className="h-screen flex flex-col">
+      {/* Drag region with window controls - outside padding, at very top */}
       <TitleBar />
 
-      {/* Navigation tabs - floats as its own element */}
-      <Navigation />
+      {/* Main app content with padding */}
+      <div className="app-window flex-1 p-6 flex flex-col gap-3">
+        {/* Navigation tabs - floats as its own element */}
+        <Navigation />
 
-      {/* Main content area - contains floating cards */}
-      <main className="flex-1 overflow-auto">
-        {initializing ? (
-          <LoadingScreen />
-        ) : error ? (
-          <ErrorScreen message={error} onRetry={initialize} />
-        ) : (
-          <>
-            {activeView === "dashboard" && <Dashboard />}
-            {activeView === "timer" && <TimerView />}
-            {activeView === "journal" && <JournalView />}
-            {/* Track overall level changes for notifications */}
-            <OverallLevelTracker />
-          </>
-        )}
-      </main>
+        {/* Main content area - contains floating cards */}
+        <main className="flex-1 overflow-auto">
+          {initializing ? (
+            <LoadingScreen />
+          ) : error ? (
+            <ErrorScreen message={error} onRetry={initialize} />
+          ) : (
+            <>
+              {activeView === "dashboard" && <Dashboard />}
+              {activeView === "timer" && <TimerView />}
+              {activeView === "journal" && <JournalView />}
+              {/* Track overall level changes for notifications */}
+              <OverallLevelTracker />
+            </>
+          )}
+        </main>
 
-      {/* Toast notifications */}
-      <ToastContainer />
+        {/* Toast notifications */}
+        <ToastContainer />
 
-      {/* Timer tick manager - runs at app root so timer continues across tab switches */}
-      <TimerManager />
+        {/* Timer tick manager - runs at app root so timer continues across tab switches */}
+        <TimerManager />
 
-      {/* Floating timer indicator - shows when timer is running on other tabs */}
-      <ActiveTimerIndicator />
+        {/* Floating timer indicator - shows when timer is running on other tabs */}
+        <ActiveTimerIndicator />
 
-      {/* Quit confirmation dialog - shows when trying to quit with active timer */}
-      <QuitConfirmDialog />
+        {/* Quit confirmation dialog - shows when trying to quit with active timer */}
+        <QuitConfirmDialog />
+      </div>
     </div>
   );
 }

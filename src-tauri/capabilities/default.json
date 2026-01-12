@@ -15,6 +15,7 @@
     "core:window:allow-is-maximized",
     "core:window:allow-set-focus",
     "core:window:allow-is-visible",
+    "core:window:allow-start-dragging",
     "sql:default",
     "sql:allow-execute",
     "sql:allow-select",

@@ -98,14 +98,23 @@ body {
 /* App window base - completely transparent to show desktop */
 .app-window {
   background: transparent;
-  height: 100vh;
-  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 @layer components {
+  /* Drag region - subtle bar at top of window for dragging */
+  .drag-region {
+    background: linear-gradient(
+      180deg,
+      rgba(13, 31, 60, 0.25) 0%,
+      rgba(13, 31, 60, 0.08) 60%,
+      transparent 100%
+    );
+    backdrop-filter: blur(8px);
+  }
+
   /* Glass panel - primary container for floating cards */
   .glass-panel {
     background: rgba(13, 31, 60, 0.70);

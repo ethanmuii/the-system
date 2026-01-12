@@ -1,5 +1,5 @@
 // src/components/common/TitleBar.tsx
-// Custom window title bar for frameless window with standard Windows behavior
+// Subtle drag region at top of window with floating window controls
 
 import { Window } from "@tauri-apps/api/window";
 import { Minus, Square, Copy, X } from "lucide-react";
@@ -47,26 +47,19 @@ export function TitleBar(): JSX.Element {
   return (
     <div
       data-tauri-drag-region
-      className="glass-panel h-10 flex items-center justify-between select-none"
+      className="drag-region h-[28px] min-h-[28px] max-h-[28px] shrink-0 flex items-center justify-end select-none"
     >
-      {/* App title */}
-      <div data-tauri-drag-region className="flex items-center gap-2 px-4">
-        <span className="text-sm font-semibold tracking-wider text-sl-text-secondary uppercase">
-          ARISE
-        </span>
-      </div>
-
-      {/* Window controls */}
-      <div className="flex h-full">
+      {/* Window controls - positioned at right edge */}
+      <div className="flex h-[28px]">
         {/* Minimize to taskbar button */}
         <button
           onClick={handleMinimize}
-          className="h-full px-4 hover:bg-white/10 transition-colors flex items-center justify-center group"
+          className="h-[28px] w-[36px] hover:bg-white/10 transition-colors flex items-center justify-center group"
           aria-label="Minimize"
           title="Minimize"
         >
           <Minus
-            size={16}
+            size={12}
             className="text-sl-text-secondary group-hover:text-sl-text-primary"
           />
         </button>
@@ -74,18 +67,18 @@ export function TitleBar(): JSX.Element {
         {/* Maximize/Restore toggle button */}
         <button
           onClick={handleToggleMaximize}
-          className="h-full px-4 hover:bg-white/10 transition-colors flex items-center justify-center group"
+          className="h-[28px] w-[36px] hover:bg-white/10 transition-colors flex items-center justify-center group"
           aria-label={isMaximized ? "Restore" : "Maximize"}
           title={isMaximized ? "Restore" : "Maximize"}
         >
           {isMaximized ? (
             <Copy
-              size={14}
+              size={10}
               className="text-sl-text-secondary group-hover:text-sl-text-primary rotate-90"
             />
           ) : (
             <Square
-              size={14}
+              size={10}
               className="text-sl-text-secondary group-hover:text-sl-text-primary"
             />
           )}
@@ -94,12 +87,12 @@ export function TitleBar(): JSX.Element {
         {/* Close to tray button */}
         <button
           onClick={handleClose}
-          className="h-full px-4 hover:bg-red-500/80 transition-colors flex items-center justify-center group"
+          className="h-[28px] w-[36px] hover:bg-red-500/80 transition-colors flex items-center justify-center group"
           aria-label="Close"
           title="Close to tray"
         >
           <X
-            size={16}
+            size={12}
             className="text-sl-text-secondary group-hover:text-white"
           />
         </button>
