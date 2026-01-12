@@ -4,7 +4,8 @@
       "Bash(npm run typecheck:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run tauri:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(cargo check:*)"
     ]
   }
 }

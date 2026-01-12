@@ -1,10 +1,16 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager,
+    AppHandle, Emitter, Manager,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use window_vibrancy::apply_acrylic;
+
+/// Command to quit the application (called from frontend after confirmation)
+#[tauri::command]
+fn quit_app(app: AppHandle) {
+    app.exit(0);
+}
 
 /// Toggle window visibility - shows if hidden, hides if visible
 fn toggle_window_visibility(app: &tauri::AppHandle) {
@@ -39,6 +45,7 @@ fn navigate_to_view(app: &tauri::AppHandle, view: &str) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![quit_app])
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
@@ -80,7 +87,7 @@ pub fn run() {
             let window = app.get_webview_window("main").unwrap();
 
             #[cfg(target_os = "windows")]
-            apply_acrylic(&window, Some((10, 22, 40, 200)))
+            apply_acrylic(&window, None)
                 .expect("Failed to apply acrylic effect");
 
             // Create system tray menu items
@@ -105,7 +112,9 @@ pub fn run() {
                         navigate_to_view(app, "timer");
                     }
                     "quit" => {
-                        app.exit(0);
+                        // Emit event to frontend - it will show confirmation if timer is running
+                        show_window(app);
+                        let _ = app.emit("quit-requested", ());
                     }
                     _ => {}
                 })

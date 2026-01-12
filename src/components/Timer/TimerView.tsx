@@ -194,104 +194,113 @@ export function TimerView(): JSX.Element {
   const displaySkillId = isRunning ? skillId : pendingSkillId;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-[var(--text-h1)] font-bold mb-6 uppercase tracking-wider">
-        Time Tracker
-      </h1>
+    <div className="flex-1 flex flex-col items-center px-6">
+      {/* Top spacer - golden ratio 38% */}
+      <div className="flex-[0.38] w-full" />
 
-      {/* Recovery Quest Banner - show when player is debuffed */}
-      {isDebuffed && (
-        <RecoveryQuestBanner
-          accumulatedSeconds={recoveryAccumulated + (isRunning ? elapsedSeconds : 0)}
-          isTimerRunning={isRunning}
-          isPaused={isPaused}
-          currentPauseDuration={currentPauseDuration}
-        />
-      )}
+      {/* Content container */}
+      <div className="max-w-2xl w-full">
+        <h1 className="text-[var(--text-h1)] font-bold mb-6 uppercase tracking-wider">
+          Time Tracker
+        </h1>
 
-      <div className="glass-panel p-8">
-        {/* Skill Selector */}
-        <div className="flex justify-center mb-8">
-          <SkillSelector
-            selectedSkillId={displaySkillId}
-            onSelect={handleSkillSelect}
-            disabled={isRunning}
-          />
-        </div>
-
-        {/* Timer Display */}
-        <div className="mb-8">
-          <TimerDisplay
-            formattedTime={formattedTime}
-            isRunning={isRunning}
+        {/* Recovery Quest Banner - show when player is debuffed */}
+        {isDebuffed && (
+          <RecoveryQuestBanner
+            accumulatedSeconds={recoveryAccumulated + (isRunning ? elapsedSeconds : 0)}
+            isTimerRunning={isRunning}
             isPaused={isPaused}
-            skillColor={skillColor}
+            currentPauseDuration={currentPauseDuration}
           />
-        </div>
-
-        {/* Timer Controls */}
-        <TimerControls
-          isRunning={isRunning}
-          isPaused={isPaused}
-          canStart={!!pendingSkillId}
-          onStart={handleStart}
-          onPause={pause}
-          onResume={resume}
-          onStop={handleStop}
-        />
-
-        {/* Session info */}
-        {isRunning && (
-          <div className="mt-6 pt-6 border-t border-[var(--sl-border-subtle)] text-center">
-            <p className="text-[var(--text-small)] text-[var(--sl-text-secondary)]">
-              Tracking: <span className="text-[var(--sl-text-primary)]">{selectedSkill?.name}</span>
-            </p>
-            {player && (
-              <p className="text-[var(--text-xs)] text-[var(--sl-text-muted)] mt-1">
-                {streakMultiplier > 1 && (
-                  <span className="text-[var(--sl-warning)]">
-                    {streakMultiplier}x streak bonus active
-                  </span>
-                )}
-                {player.isDebuffed && (
-                  <span className="text-[var(--sl-danger)] ml-2">
-                    (0.5x debuff penalty)
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
         )}
 
-        {/* XP Preview */}
-        {isRunning && elapsedSeconds > 0 && (
-          <div className="mt-4 text-center">
-            <p className="text-[var(--text-xs)] text-[var(--sl-text-muted)]">
-              Current session:{" "}
-              <span className="text-[var(--sl-blue-ice)]">
-                ~{formatXP(
-                  Math.floor(
-                    secondsToHours(elapsedSeconds) *
-                      TIME_XP_RATE *
-                      streakMultiplier *
-                      (player?.isDebuffed ? DEBUFF_MULTIPLIER : 1)
-                  )
-                )}{" "}
-                XP
-              </span>
-            </p>
+        <div className="glass-panel p-8">
+          {/* Skill Selector */}
+          <div className="flex justify-center mb-8">
+            <SkillSelector
+              selectedSkillId={displaySkillId}
+              onSelect={handleSkillSelect}
+              disabled={isRunning}
+            />
           </div>
+
+          {/* Timer Display */}
+          <div className="mb-8">
+            <TimerDisplay
+              formattedTime={formattedTime}
+              isRunning={isRunning}
+              isPaused={isPaused}
+              skillColor={skillColor}
+            />
+          </div>
+
+          {/* Timer Controls */}
+          <TimerControls
+            isRunning={isRunning}
+            isPaused={isPaused}
+            canStart={!!pendingSkillId}
+            onStart={handleStart}
+            onPause={pause}
+            onResume={resume}
+            onStop={handleStop}
+          />
+
+          {/* Session info */}
+          {isRunning && (
+            <div className="mt-6 pt-6 border-t border-[var(--sl-border-subtle)] text-center">
+              <p className="text-[var(--text-small)] text-[var(--sl-text-secondary)]">
+                Tracking: <span className="text-[var(--sl-text-primary)]">{selectedSkill?.name}</span>
+              </p>
+              {player && (
+                <p className="text-[var(--text-xs)] text-[var(--sl-text-muted)] mt-1">
+                  {streakMultiplier > 1 && (
+                    <span className="text-[var(--sl-warning)]">
+                      {streakMultiplier}x streak bonus active
+                    </span>
+                  )}
+                  {player.isDebuffed && (
+                    <span className="text-[var(--sl-danger)] ml-2">
+                      (0.5x debuff penalty)
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* XP Preview */}
+          {isRunning && elapsedSeconds > 0 && (
+            <div className="mt-4 text-center">
+              <p className="text-[var(--text-xs)] text-[var(--sl-text-muted)]">
+                Current session:{" "}
+                <span className="text-[var(--sl-blue-ice)]">
+                  ~{formatXP(
+                    Math.floor(
+                      secondsToHours(elapsedSeconds) *
+                        TIME_XP_RATE *
+                        streakMultiplier *
+                        (player?.isDebuffed ? DEBUFF_MULTIPLIER : 1)
+                    )
+                  )}{" "}
+                  XP
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Manual Time Entry - only show when timer is not running */}
+        {!isRunning && (
+          <ManualTimeEntry
+            selectedSkillId={pendingSkillId}
+            onLogTime={handleManualLog}
+            disabled={false}
+          />
         )}
       </div>
 
-      {/* Manual Time Entry - only show when timer is not running */}
-      {!isRunning && (
-        <ManualTimeEntry
-          selectedSkillId={pendingSkillId}
-          onLogTime={handleManualLog}
-          disabled={false}
-        />
-      )}
+      {/* Bottom spacer - golden ratio 62% */}
+      <div className="flex-[0.62] w-full" />
     </div>
   );
 }

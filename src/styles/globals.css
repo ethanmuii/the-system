@@ -59,6 +59,7 @@
 
   /* === TYPE SCALE === */
   --text-display: 2.5rem;
+  --text-hero: 4.5rem;
   --text-h1: 1.75rem;
   --text-h2: 1.25rem;
   --text-h3: 1rem;
@@ -94,19 +95,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* App window base - for Acrylic effect */
+/* App window base - completely transparent to show desktop */
 .app-window {
-  background: rgba(10, 22, 40, 0.75);
-  min-height: 100vh;
+  background: transparent;
+  height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 @layer components {
-  /* Glass panel - primary container */
+  /* Glass panel - primary container for floating cards */
   .glass-panel {
-    background: rgba(13, 31, 60, 0.85);
+    background: rgba(13, 31, 60, 0.70);
     backdrop-filter: blur(12px);
     border: 1px solid var(--sl-border-subtle);
-    border-radius: 8px;
+    border-radius: 0;
     box-shadow:
       0 0 1px var(--sl-blue-glow),
       0 0 8px rgba(59, 130, 246, 0.15),
@@ -125,10 +130,10 @@ body {
 
   /* Elevated glass panel */
   .glass-panel-elevated {
-    background: rgba(19, 39, 68, 0.92);
-    backdrop-filter: blur(16px);
+    background: rgba(19, 39, 68, 0.60);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--sl-border-medium);
-    border-radius: 8px;
+    border-radius: 0;
   }
 
   /* Panel header */
@@ -365,4 +370,18 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* White frosted theme variant - toggle by adding theme-light class to app-window */
+.app-window.theme-light {
+  background: rgba(255, 255, 255, 0.20);
+}
+
+.theme-light .glass-panel {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.theme-light .glass-panel-elevated {
+  background: rgba(255, 255, 255, 0.20);
 }

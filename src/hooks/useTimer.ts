@@ -1,7 +1,8 @@
 // src/hooks/useTimer.ts
-// Custom hook for timer functionality with tick interval management
+// Custom hook for timer functionality - provides convenient access to timer state and actions.
+// Note: The tick interval is managed by TimerManager component at the App level.
 
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useTimerStore } from "@/stores/timerStore";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { formatTime } from "@/lib/xpCalculator";
@@ -22,24 +23,12 @@ export function useTimer() {
   const pauseTimer = useTimerStore((state) => state.pauseTimer);
   const resumeTimer = useTimerStore((state) => state.resumeTimer);
   const stopTimer = useTimerStore((state) => state.stopTimer);
-  const tick = useTimerStore((state) => state.tick);
   const reset = useTimerStore((state) => state.reset);
   const setRecoveryMode = useTimerStore((state) => state.setRecoveryMode);
 
   // Get selected skill info
   const skills = useSkillsStore((state) => state.skills);
   const selectedSkill = skills.find((s) => s.id === skillId) ?? null;
-
-  // Manage tick interval
-  useEffect(() => {
-    if (!isRunning || isPaused) return;
-
-    const interval = setInterval(() => {
-      tick();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning, isPaused, tick]);
 
   // Calculate current pause duration (for UI display)
   const currentPauseDuration = pauseStartTime

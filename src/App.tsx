@@ -2,9 +2,10 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { TitleBar } from "@/components/common/TitleBar";
 import { ToastContainer } from "@/components/common/Toast";
+import { QuitConfirmDialog } from "@/components/common/QuitConfirmDialog";
 import { Navigation } from "@/components/Navigation";
 import { Dashboard } from "@/components/Dashboard";
-import { TimerView } from "@/components/Timer";
+import { TimerView, TimerManager, ActiveTimerIndicator } from "@/components/Timer";
 import { JournalView } from "@/components/Journal";
 import { initializeDatabase } from "@/lib/initDatabase";
 import { checkAndProcessNewDay, DailyResolutionResult } from "@/lib/dailyResolution";
@@ -207,15 +208,15 @@ function App(): JSX.Element {
   }, []);
 
   return (
-    <div className="app-window min-h-screen flex flex-col">
-      {/* Custom title bar */}
+    <div className="app-window h-screen p-6 flex flex-col gap-3">
+      {/* Custom title bar - floats as its own card */}
       <TitleBar />
 
-      {/* Navigation tabs */}
+      {/* Navigation tabs - floats as its own element */}
       <Navigation />
 
-      {/* Main content area */}
-      <main className="flex-1 p-6 overflow-auto">
+      {/* Main content area - contains floating cards */}
+      <main className="flex-1 overflow-auto">
         {initializing ? (
           <LoadingScreen />
         ) : error ? (
@@ -233,6 +234,15 @@ function App(): JSX.Element {
 
       {/* Toast notifications */}
       <ToastContainer />
+
+      {/* Timer tick manager - runs at app root so timer continues across tab switches */}
+      <TimerManager />
+
+      {/* Floating timer indicator - shows when timer is running on other tabs */}
+      <ActiveTimerIndicator />
+
+      {/* Quit confirmation dialog - shows when trying to quit with active timer */}
+      <QuitConfirmDialog />
     </div>
   );
 }

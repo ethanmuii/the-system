@@ -62,10 +62,10 @@ export function PlayerStats(): JSX.Element {
       {/* Row 1: Level + Health */}
       <div className="flex justify-between items-start mb-6">
         <div className={isFlashing ? "level-up-flash" : ""}>
-          <span className="text-[var(--text-small)] uppercase tracking-wider text-[var(--sl-text-secondary)] block mb-1">
+          <span className="text-[var(--text-body)] lg:text-[var(--text-h3)] uppercase tracking-wider text-[var(--sl-text-secondary)] block mb-1">
             Overall Level
           </span>
-          <span className="text-[var(--text-display)] font-bold level-display">
+          <span className="text-[4rem] lg:text-[4.5rem] font-bold level-display leading-none">
             {level}
           </span>
         </div>

@@ -1,27 +1,27 @@
 // src/components/common/TitleBar.tsx
-// Custom window title bar for frameless window with tray integration
+// Custom window title bar for frameless window with standard Windows behavior
 
 import { Window } from "@tauri-apps/api/window";
-import { Minus, Maximize2, Minimize2, X } from "lucide-react";
+import { Minus, Square, Copy, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const appWindow = new Window("main");
 
 export function TitleBar(): JSX.Element {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
 
-  // Track fullscreen state
+  // Track maximized state
   useEffect(() => {
-    const checkFullscreen = async (): Promise<void> => {
-      const fullscreen = await appWindow.isFullscreen();
-      setIsFullscreen(fullscreen);
+    const checkMaximized = async (): Promise<void> => {
+      const maximized = await appWindow.isMaximized();
+      setIsMaximized(maximized);
     };
 
-    checkFullscreen();
+    checkMaximized();
 
-    // Listen for resize events to detect fullscreen changes
+    // Listen for resize events to detect maximize changes
     const unlisten = appWindow.onResized(() => {
-      checkFullscreen();
+      checkMaximized();
     });
 
     return () => {
@@ -29,27 +29,25 @@ export function TitleBar(): JSX.Element {
     };
   }, []);
 
-  // Minimize to tray (hide window, app stays running)
-  const handleMinimizeToTray = async (): Promise<void> => {
+  // Minimize to taskbar (standard Windows minimize)
+  const handleMinimize = async (): Promise<void> => {
+    await appWindow.minimize();
+  };
+
+  // Toggle maximized/normal window state
+  const handleToggleMaximize = async (): Promise<void> => {
+    await appWindow.toggleMaximize();
+  };
+
+  // Close window to tray (app keeps running in background)
+  const handleClose = async (): Promise<void> => {
     await appWindow.hide();
-  };
-
-  // Toggle fullscreen mode
-  const handleToggleFullscreen = async (): Promise<void> => {
-    const fullscreen = await appWindow.isFullscreen();
-    await appWindow.setFullscreen(!fullscreen);
-    setIsFullscreen(!fullscreen);
-  };
-
-  // Quit the application entirely
-  const handleQuit = async (): Promise<void> => {
-    await appWindow.close();
   };
 
   return (
     <div
       data-tauri-drag-region
-      className="h-10 flex items-center justify-between select-none bg-sl-bg-dark/50 border-b border-sl-border-subtle"
+      className="glass-panel h-10 flex items-center justify-between select-none"
     >
       {/* App title */}
       <div data-tauri-drag-region className="flex items-center gap-2 px-4">
@@ -60,12 +58,12 @@ export function TitleBar(): JSX.Element {
 
       {/* Window controls */}
       <div className="flex h-full">
-        {/* Minimize to tray button */}
+        {/* Minimize to taskbar button */}
         <button
-          onClick={handleMinimizeToTray}
+          onClick={handleMinimize}
           className="h-full px-4 hover:bg-white/10 transition-colors flex items-center justify-center group"
-          aria-label="Minimize to tray"
-          title="Minimize to tray (Ctrl+Shift+A to restore)"
+          aria-label="Minimize"
+          title="Minimize"
         >
           <Minus
             size={16}
@@ -73,32 +71,32 @@ export function TitleBar(): JSX.Element {
           />
         </button>
 
-        {/* Fullscreen toggle button */}
+        {/* Maximize/Restore toggle button */}
         <button
-          onClick={handleToggleFullscreen}
+          onClick={handleToggleMaximize}
           className="h-full px-4 hover:bg-white/10 transition-colors flex items-center justify-center group"
-          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          aria-label={isMaximized ? "Restore" : "Maximize"}
+          title={isMaximized ? "Restore" : "Maximize"}
         >
-          {isFullscreen ? (
-            <Minimize2
+          {isMaximized ? (
+            <Copy
               size={14}
-              className="text-sl-text-secondary group-hover:text-sl-text-primary"
+              className="text-sl-text-secondary group-hover:text-sl-text-primary rotate-90"
             />
           ) : (
-            <Maximize2
+            <Square
               size={14}
               className="text-sl-text-secondary group-hover:text-sl-text-primary"
             />
           )}
         </button>
 
-        {/* Quit button */}
+        {/* Close to tray button */}
         <button
-          onClick={handleQuit}
+          onClick={handleClose}
           className="h-full px-4 hover:bg-red-500/80 transition-colors flex items-center justify-center group"
-          aria-label="Quit application"
-          title="Quit application"
+          aria-label="Close"
+          title="Close to tray"
         >
           <X
             size={16}

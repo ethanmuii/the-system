@@ -22,7 +22,7 @@ export function Navigation(): JSX.Element {
   const setActiveView = useNavigationStore((state) => state.setActiveView);
 
   return (
-    <nav className="border-b border-[var(--sl-border-subtle)] bg-[rgba(10,22,40,0.5)]">
+    <nav className="glass-panel">
       <div className="flex px-4">
         {tabs.map((tab) => (
           <button

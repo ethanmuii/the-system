@@ -7,7 +7,8 @@ import { Plus } from "lucide-react";
 import { useQuests } from "@/hooks/useQuests";
 import { useSkills } from "@/hooks/useSkills";
 import { useToastStore } from "@/stores/toastStore";
-import { QuestItem } from "./QuestItem";
+import { QuestCard } from "./QuestCard";
+import { CompletedQuestItem } from "./CompletedQuestItem";
 import { QuestModal } from "./QuestModal";
 import { XPIndicator } from "./XPIndicator";
 
@@ -159,46 +160,81 @@ export function QuestList(): JSX.Element {
         </button>
       </div>
 
-      {/* Quest List */}
-      {todayQuests.length === 0 ? (
-        <div className="glass-panel p-8 text-center">
-          <p className="text-[var(--sl-text-muted)] text-[var(--text-body)]">
-            No quests for today. Add a quest to get started!
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {todayQuests.map((quest) => {
-              const animation = xpAnimations.find(
-                (a) => a.questId === quest.id
-              );
+      {/* Quest List - Hybrid Layout */}
+      {(() => {
+        const activeQuests = todayQuests.filter((q) => !q.isCompleted);
+        const completedQuests = todayQuests.filter((q) => q.isCompleted);
 
-              return (
-                <div key={quest.id} className="relative">
-                  <QuestItem
-                    quest={quest}
-                    skill={getSkill(quest.skillId)}
-                    onComplete={handleComplete}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                  {/* XP Animation */}
-                  {animation && (
-                    <XPIndicator
-                      xp={animation.xp}
-                      skillColor={animation.skillColor}
-                      onAnimationComplete={() =>
-                        handleAnimationComplete(quest.id)
-                      }
-                    />
-                  )}
+        return (
+          <>
+            {/* Empty State */}
+            {todayQuests.length === 0 && (
+              <div className="glass-panel p-8 text-center">
+                <p className="text-[var(--sl-text-muted)] text-[var(--text-body)]">
+                  No quests for today. Add a quest to get started!
+                </p>
+              </div>
+            )}
+
+            {/* Active Quests - Card Grid */}
+            {activeQuests.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <AnimatePresence mode="popLayout">
+                  {activeQuests.map((quest) => {
+                    const animation = xpAnimations.find(
+                      (a) => a.questId === quest.id
+                    );
+
+                    return (
+                      <div key={quest.id} className="relative">
+                        <QuestCard
+                          quest={quest}
+                          skill={getSkill(quest.skillId)}
+                          onComplete={handleComplete}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                        />
+                        {/* XP Animation */}
+                        {animation && (
+                          <XPIndicator
+                            xp={animation.xp}
+                            skillColor={animation.skillColor}
+                            onAnimationComplete={() =>
+                              handleAnimationComplete(quest.id)
+                            }
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Completed Quests - Compact List */}
+            {completedQuests.length > 0 && (
+              <div className="glass-panel p-3">
+                <div className="flex items-center gap-2 mb-2 px-2">
+                  <span className="text-[var(--text-xs)] uppercase text-[var(--sl-text-muted)] tracking-wider font-semibold">
+                    Completed ({completedQuests.length})
+                  </span>
                 </div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      )}
+                <div className="divide-y divide-[var(--sl-border-subtle)]">
+                  <AnimatePresence mode="popLayout">
+                    {completedQuests.map((quest) => (
+                      <CompletedQuestItem
+                        key={quest.id}
+                        quest={quest}
+                        skill={getSkill(quest.skillId)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Quest Modal */}
       <QuestModal

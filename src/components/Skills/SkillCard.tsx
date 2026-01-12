@@ -35,7 +35,7 @@ export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
 
   return (
     <motion.div
-      className={`glass-panel p-4 cursor-pointer ${isFlashing ? "level-up-flash" : ""}`}
+      className={`glass-panel p-5 lg:p-6 cursor-pointer ${isFlashing ? "level-up-flash" : ""}`}
       style={{
         borderLeftWidth: "3px",
         borderLeftColor: skill.color,
@@ -49,22 +49,22 @@ export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
       transition={{ duration: 0.15 }}
     >
       {/* Header: Icon + Name */}
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">{skill.icon}</span>
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-2xl lg:text-3xl">{skill.icon}</span>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[var(--text-h3)] font-semibold truncate">
+          <h3 className="text-[var(--text-h3)] lg:text-[var(--text-h2)] font-semibold truncate">
             {skill.name}
           </h3>
         </div>
       </div>
 
       {/* Level Display */}
-      <div className="flex items-baseline gap-2 mb-3">
+      <div className="flex items-baseline gap-2 mb-4">
         <span className="text-[var(--text-xs)] uppercase text-[var(--sl-text-secondary)] tracking-wider">
           Level
         </span>
         <span
-          className="text-[var(--text-stat)] font-bold"
+          className="text-[var(--text-stat)] lg:text-[2rem] font-bold"
           style={{ color: skill.color }}
         >
           {skill.level}
@@ -72,7 +72,7 @@ export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
       </div>
 
       {/* XP Progress Bar */}
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="xp-bar">
           <motion.div
             className="xp-bar-fill"
