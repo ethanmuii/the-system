@@ -3,7 +3,8 @@ import { listen } from "@tauri-apps/api/event";
 import { TitleBar } from "@/components/common/TitleBar";
 import { ToastContainer } from "@/components/common/Toast";
 import { QuitConfirmDialog } from "@/components/common/QuitConfirmDialog";
-import { Navigation } from "@/components/Navigation";
+import { SwipeableViews } from "@/components/common/SwipeableViews";
+import { NavArrow } from "@/components/common/NavArrow";
 import { Dashboard } from "@/components/Dashboard";
 import { TimerView, TimerManager, ActiveTimerIndicator } from "@/components/Timer";
 import { JournalView } from "@/components/Journal";
@@ -12,7 +13,7 @@ import { checkAndProcessNewDay, DailyResolutionResult } from "@/lib/dailyResolut
 import { usePlayerStore } from "@/stores/playerStore";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { useQuestsStore } from "@/stores/questsStore";
-import { useNavigationStore } from "@/stores/navigationStore";
+import { useNavigationStore, getAdjacentViews } from "@/stores/navigationStore";
 import { useToastStore } from "@/stores/toastStore";
 import { usePlayer } from "@/hooks/usePlayer";
 import { getStreakMultiplier } from "@/lib/xpCalculator";
@@ -146,7 +147,12 @@ function App(): JSX.Element {
   const fetchSkills = useSkillsStore((state) => state.fetchSkills);
   const fetchQuests = useQuestsStore((state) => state.fetchQuests);
   const activeView = useNavigationStore((state) => state.activeView);
+  const navigateLeft = useNavigationStore((state) => state.navigateLeft);
+  const navigateRight = useNavigationStore((state) => state.navigateRight);
   const addToast = useToastStore((state) => state.addToast);
+
+  // Get adjacent views for showing/hiding arrows
+  const { left: canGoLeft, right: canGoRight } = getAdjacentViews(activeView);
 
   const initialize = useCallback(async (): Promise<void> => {
     setInitializing(true);
@@ -207,44 +213,73 @@ function App(): JSX.Element {
     };
   }, []);
 
+  // Keyboard navigation with arrow keys
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      // Don't navigate if user is typing in an input/textarea
+      const target = event.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        navigateLeft();
+      } else if (event.key === "ArrowRight") {
+        navigateRight();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigateLeft, navigateRight]);
+
   return (
     <div className="h-screen flex flex-col">
       {/* Drag region with window controls - outside padding, at very top */}
       <TitleBar />
 
-      {/* Main app content with padding */}
-      <div className="app-window flex-1 min-h-0 p-6 flex flex-col gap-3">
-        {/* Navigation tabs - floats as its own element */}
-        <Navigation />
+      {/* Main content wrapper - relative positioning for nav arrows */}
+      <div className="flex-1 min-h-0 relative">
+        {/* Left navigation arrow - in left padding area */}
+        {canGoLeft && (
+          <NavArrow direction="left" onClick={navigateLeft} />
+        )}
 
-        {/* Main content area - contains floating cards */}
-        <main className="flex-1 min-h-0 scroll-hidden-bar">
+        {/* Right navigation arrow - in right padding area */}
+        {canGoRight && (
+          <NavArrow direction="right" onClick={navigateRight} />
+        )}
+
+        {/* App window with padding */}
+        <div className="app-window h-full p-6 flex flex-col">
+          {/* Main content area - swipeable views */}
           {initializing ? (
             <LoadingScreen />
           ) : error ? (
             <ErrorScreen message={error} onRetry={initialize} />
           ) : (
-            <>
-              {activeView === "dashboard" && <Dashboard />}
-              {activeView === "timer" && <TimerView />}
-              {activeView === "journal" && <JournalView />}
-              {/* Track overall level changes for notifications */}
-              <OverallLevelTracker />
-            </>
+            <SwipeableViews>
+              <JournalView />
+              <Dashboard />
+              <TimerView />
+            </SwipeableViews>
           )}
-        </main>
 
-        {/* Toast notifications */}
-        <ToastContainer />
+          {/* Track overall level changes for notifications */}
+          <OverallLevelTracker />
 
-        {/* Timer tick manager - runs at app root so timer continues across tab switches */}
-        <TimerManager />
+          {/* Toast notifications */}
+          <ToastContainer />
 
-        {/* Floating timer indicator - shows when timer is running on other tabs */}
-        <ActiveTimerIndicator />
+          {/* Timer tick manager - runs at app root so timer continues across tab switches */}
+          <TimerManager />
 
-        {/* Quit confirmation dialog - shows when trying to quit with active timer */}
-        <QuitConfirmDialog />
+          {/* Floating timer indicator - shows when timer is running on other tabs */}
+          <ActiveTimerIndicator />
+
+          {/* Quit confirmation dialog - shows when trying to quit with active timer */}
+          <QuitConfirmDialog />
+        </div>
       </div>
     </div>
   );
