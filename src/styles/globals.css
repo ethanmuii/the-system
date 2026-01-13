@@ -98,6 +98,7 @@ body {
 /* App window base - completely transparent to show desktop */
 .app-window {
   background: transparent;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;

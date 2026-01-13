@@ -213,12 +213,12 @@ function App(): JSX.Element {
       <TitleBar />
 
       {/* Main app content with padding */}
-      <div className="app-window flex-1 p-6 flex flex-col gap-3">
+      <div className="app-window flex-1 min-h-0 p-6 flex flex-col gap-3">
         {/* Navigation tabs - floats as its own element */}
         <Navigation />
 
         {/* Main content area - contains floating cards */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 min-h-0 overflow-auto">
           {initializing ? (
             <LoadingScreen />
           ) : error ? (
