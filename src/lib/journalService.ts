@@ -2,6 +2,7 @@
 // Database operations for journal_entries table
 
 import { query, execute, generateId } from "@/lib/db";
+import { getTodayString, getLocalDateString, parseLocalDate } from "@/lib/dateUtils";
 import type { JournalEntry } from "@/types";
 
 // Database row type (snake_case)
@@ -20,24 +21,17 @@ function mapDbRowToJournalEntry(row: JournalEntryDbRow): JournalEntry {
   return {
     id: row.id,
     content: row.content,
-    entryDate: new Date(row.entry_date),
+    entryDate: parseLocalDate(row.entry_date),
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
 }
 
 /**
- * Get today's date as YYYY-MM-DD string
- */
-function getTodayDateString(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-/**
  * Get today's journal entry, or null if none exists
  */
 export async function getTodayEntry(): Promise<JournalEntry | null> {
-  const today = getTodayDateString();
+  const today = getTodayString();
   const rows = await query<JournalEntryDbRow>(
     "SELECT * FROM journal_entries WHERE entry_date = ?",
     [today]
@@ -56,7 +50,7 @@ export async function getTodayEntry(): Promise<JournalEntry | null> {
 export async function getEntryByDate(
   date: Date
 ): Promise<JournalEntry | null> {
-  const dateString = date.toISOString().split("T")[0];
+  const dateString = getLocalDateString(date);
   const rows = await query<JournalEntryDbRow>(
     "SELECT * FROM journal_entries WHERE entry_date = ?",
     [dateString]
@@ -74,7 +68,7 @@ export async function getEntryByDate(
  * Uses SQLite UPSERT to handle both insert and update
  */
 export async function saveEntry(content: string): Promise<JournalEntry> {
-  const today = getTodayDateString();
+  const today = getTodayString();
   const id = generateId();
 
   // Use UPSERT pattern: insert new or update existing based on entry_date unique constraint

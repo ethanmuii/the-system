@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useQuests } from "@/hooks/useQuests";
 import { useSkills } from "@/hooks/useSkills";
 import { QUEST_XP } from "@/lib/xpCalculator";
+import { getTodayString, getLocalDateString } from "@/lib/dateUtils";
 import type { Quest, Difficulty, RecurrencePattern } from "@/types";
 
 interface QuestModalProps {
@@ -23,10 +24,6 @@ const DAYS_OF_WEEK = [
   { value: 5, label: "Fri" },
   { value: 6, label: "Sat" },
 ];
-
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0];
-}
 
 export function QuestModal({
   isOpen,
@@ -57,7 +54,7 @@ export function QuestModal({
         setTitle(editingQuest.title);
         setSkillId(editingQuest.skillId);
         setDifficulty(editingQuest.difficulty);
-        setDueDate(editingQuest.dueDate.toISOString().split("T")[0]);
+        setDueDate(getLocalDateString(editingQuest.dueDate));
         setIsRecurring(editingQuest.isRecurring);
         if (editingQuest.recurrencePattern) {
           setRecurrenceType(editingQuest.recurrencePattern.type as "daily" | "weekly");

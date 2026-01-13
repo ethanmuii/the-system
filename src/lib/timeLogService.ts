@@ -8,6 +8,7 @@ import {
   getStreakMultiplier,
   DEBUFF_MULTIPLIER,
 } from "@/lib/xpCalculator";
+import { getTodayString } from "@/lib/dateUtils";
 import type { TimeLog, TimeLogSource } from "@/types";
 
 // Database row type (snake_case)
@@ -98,7 +99,7 @@ export async function logTime(
  * Get time logs for today
  */
 export async function getTodayTimeLogs(): Promise<TimeLog[]> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   const rows = await query<TimeLogDbRow>(
     "SELECT * FROM time_logs WHERE DATE(logged_at) = ? ORDER BY logged_at DESC",
     [today]
@@ -121,7 +122,7 @@ export async function getTimeLogsBySkill(skillId: string): Promise<TimeLog[]> {
  * Get total time logged today in seconds
  */
 export async function getTodayTotalSeconds(): Promise<number> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   const result = await query<{ total: number }>(
     "SELECT COALESCE(SUM(duration_seconds), 0) as total FROM time_logs WHERE DATE(logged_at) = ?",
     [today]

@@ -382,6 +382,18 @@ body {
   }
 }
 
+/* Scrollable container with hidden scrollbar */
+.scroll-hidden-bar {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.scroll-hidden-bar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, newer Edge */
+}
+
 /* White frosted theme variant - toggle by adding theme-light class to app-window */
 .app-window.theme-light {
   background: rgba(255, 255, 255, 0.20);

@@ -5,7 +5,8 @@
       "Bash(npm run lint:*)",
       "Bash(npm run tauri:*)",
       "Bash(tree:*)",
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

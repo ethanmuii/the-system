@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import { query, execute, generateId } from "@/lib/db";
 import { QUEST_XP, getStreakMultiplier, DEBUFF_MULTIPLIER } from "@/lib/xpCalculator";
+import { parseLocalDate } from "@/lib/dateUtils";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Quest, Difficulty, RecurrencePattern, CreateQuestInput, UpdateQuestInput } from "@/types";
@@ -37,7 +38,7 @@ function mapDbRowToQuest(row: QuestDbRow): Quest {
     recurrencePattern: row.recurrence_pattern
       ? (JSON.parse(row.recurrence_pattern) as RecurrencePattern)
       : null,
-    dueDate: new Date(row.due_date),
+    dueDate: parseLocalDate(row.due_date),
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
     createdAt: new Date(row.created_at),
     // Computed property

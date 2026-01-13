@@ -16,8 +16,9 @@ export const QUEST_XP = {
 export const HEALTH_CONFIG = {
   max: 100,
   starting: 100,
-  dailyPenalty: -10,
-  dailyReward: 5,
+  perQuestPenalty: -5,    // Penalty per missed quest
+  maxDailyPenalty: -20,   // Cap on daily penalty (protects against despair spiral)
+  dailyReward: 5,         // Reward for completing ALL quests (perfection bonus)
   debuffThreshold: 0,
   recoveryHealth: 50,
 } as const;
@@ -122,16 +123,47 @@ export function calculateSessionXP(
 // === HEALTH CALCULATIONS ===
 
 /**
- * Calculate new health based on daily quest completion
+ * Calculate health change based on quest completion counts
+ *
+ * Behavior:
+ * - No quests for the day: 0 (no change)
+ * - All quests completed: +5 (perfection bonus)
+ * - Missed quests: -5 per missed quest, capped at -20
+ *
+ * This per-quest penalty system incentivizes completing as many quests
+ * as possible, even on "bad days" where perfection isn't achievable.
  */
-export function calculateDailyHealth(
-  currentHealth: number,
-  completedAllQuests: boolean
+export function calculateDailyHealthChange(
+  questsCompleted: number,
+  questsTotal: number
 ): number {
-  if (completedAllQuests) {
-    return Math.min(HEALTH_CONFIG.max, currentHealth + HEALTH_CONFIG.dailyReward);
+  // No quests = no change (rest day or not set up yet)
+  if (questsTotal === 0) {
+    return 0;
   }
-  return Math.max(0, currentHealth + HEALTH_CONFIG.dailyPenalty);
+
+  // Perfect completion: award the daily reward
+  if (questsCompleted === questsTotal) {
+    return HEALTH_CONFIG.dailyReward;
+  }
+
+  // Partial completion: penalty per missed quest, with cap
+  const missedQuests = questsTotal - questsCompleted;
+  const rawPenalty = missedQuests * HEALTH_CONFIG.perQuestPenalty;
+
+  // Cap the penalty to prevent catastrophic loss
+  return Math.max(rawPenalty, HEALTH_CONFIG.maxDailyPenalty);
+}
+
+/**
+ * Apply health change to current health, clamping to valid range
+ */
+export function applyHealthChange(
+  currentHealth: number,
+  healthChange: number
+): number {
+  const newHealth = currentHealth + healthChange;
+  return Math.max(0, Math.min(HEALTH_CONFIG.max, newHealth));
 }
 
 /**

@@ -3,6 +3,7 @@
 
 import { create } from "zustand";
 import { query, execute } from "@/lib/db";
+import { getTodayString } from "@/lib/dateUtils";
 import type { Player } from "@/types";
 
 // Database row type (snake_case)
@@ -81,7 +82,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       const player = mapDbRowToPlayer(rows[0]);
 
       // Calculate today's XP from time_logs
-      const today = new Date().toISOString().split("T")[0];
+      const today = getTodayString();
       const logs = await query<TimeLogXpRow>(
         "SELECT xp_earned FROM time_logs WHERE DATE(logged_at) = ?",
         [today]

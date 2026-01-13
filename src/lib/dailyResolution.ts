@@ -2,8 +2,9 @@
 // Daily resolution logic for recurring quests, streak/health updates, and day transitions
 
 import { query, execute, generateId } from "@/lib/db";
-import { calculateDailyHealth, shouldEnterDebuff, HEALTH_CONFIG } from "@/lib/xpCalculator";
+import { calculateDailyHealthChange, applyHealthChange, shouldEnterDebuff } from "@/lib/xpCalculator";
 import { createDailySnapshot } from "@/lib/snapshotService";
+import { getTodayString, getLocalYesterdayString, getLocalDateString } from "@/lib/dateUtils";
 import type { RecurrencePattern } from "@/types";
 
 interface RecurringQuestRow {
@@ -41,22 +42,6 @@ export interface DailyResolutionResult {
   newHealth: number;
   enteredDebuff: boolean;
   questsGenerated: number;
-}
-
-/**
- * Get today's date as YYYY-MM-DD string
- */
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-/**
- * Get yesterday's date as YYYY-MM-DD string
- */
-function getYesterdayString(): string {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split("T")[0];
 }
 
 /**
@@ -98,7 +83,7 @@ async function questExistsForDate(
  * Generate recurring quests for a specific date
  */
 export async function generateRecurringQuests(date: Date): Promise<number> {
-  const dateString = date.toISOString().split("T")[0];
+  const dateString = getLocalDateString(date);
   let questsGenerated = 0;
 
   try {
@@ -233,7 +218,7 @@ async function setLastProcessedDate(dateString: string): Promise<void> {
  */
 export async function checkAndProcessNewDay(): Promise<DailyResolutionResult> {
   const today = getTodayString();
-  const yesterday = getYesterdayString();
+  const yesterday = getLocalYesterdayString();
 
   // Default result for when no processing is needed
   const noOpResult: DailyResolutionResult = {
@@ -292,22 +277,26 @@ export async function checkAndProcessNewDay(): Promise<DailyResolutionResult> {
 
     const newLongestStreak = Math.max(playerState.longest_streak, newStreak);
 
-    // === Step 3: Calculate health change ===
+    // === Step 3: Calculate health change (per-quest penalty system) ===
     let newHealth = playerState.health;
     let healthChange = 0;
 
-    // Only apply health change if there were quests yesterday
-    if (playerState.last_processed_date !== null && hadQuestsYesterday) {
-      newHealth = calculateDailyHealth(playerState.health, completedAllYesterday);
-      healthChange = completedAllYesterday
-        ? HEALTH_CONFIG.dailyReward
-        : HEALTH_CONFIG.dailyPenalty;
+    // Only apply health change if this isn't the first day
+    if (playerState.last_processed_date !== null) {
+      // Calculate health change based on quest completion counts
+      // - No quests: 0 change
+      // - All completed: +5 (perfection bonus)
+      // - Missed quests: -5 per miss, capped at -20
+      healthChange = calculateDailyHealthChange(
+        yesterdayQuests.completed,
+        yesterdayQuests.total
+      );
 
-      // Clamp health
-      if (newHealth > HEALTH_CONFIG.max) {
-        healthChange = HEALTH_CONFIG.max - playerState.health;
-        newHealth = HEALTH_CONFIG.max;
-      }
+      // Apply the change and clamp to valid range
+      newHealth = applyHealthChange(playerState.health, healthChange);
+
+      // Adjust healthChange if clamping occurred (for accurate reporting)
+      healthChange = newHealth - playerState.health;
     }
 
     // === Step 4: Check for debuff state ===

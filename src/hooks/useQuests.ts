@@ -2,6 +2,7 @@
 // Custom hook wrapping questsStore with computed values
 
 import { useQuestsStore, CompleteQuestResult } from "@/stores/questsStore";
+import { getTodayString, getLocalDateString } from "@/lib/dateUtils";
 import type { Quest, CreateQuestInput, UpdateQuestInput } from "@/types";
 
 interface UseQuestsReturn {
@@ -30,20 +31,6 @@ interface UseQuestsReturn {
   allQuestsComplete: boolean;
 }
 
-/**
- * Get today's date as YYYY-MM-DD string
- */
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-/**
- * Convert a Date to YYYY-MM-DD string for comparison
- */
-function dateToString(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
 export function useQuests(): UseQuestsReturn {
   const store = useQuestsStore();
 
@@ -51,7 +38,7 @@ export function useQuests(): UseQuestsReturn {
 
   // Filter quests for today
   const todayQuests = store.quests.filter(
-    (q) => dateToString(q.dueDate) === today
+    (q) => getLocalDateString(q.dueDate) === today
   );
 
   // Sort: pending first (by difficulty desc), then completed

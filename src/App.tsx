@@ -218,7 +218,7 @@ function App(): JSX.Element {
         <Navigation />
 
         {/* Main content area - contains floating cards */}
-        <main className="flex-1 min-h-0 overflow-auto">
+        <main className="flex-1 min-h-0 scroll-hidden-bar">
           {initializing ? (
             <LoadingScreen />
           ) : error ? (
