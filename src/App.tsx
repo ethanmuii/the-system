@@ -251,7 +251,7 @@ function App(): JSX.Element {
         )}
 
         {/* App window with padding */}
-        <div className="app-window h-full p-6 flex flex-col">
+        <div className="app-window h-full p-8 flex flex-col">
           {/* Main content area - swipeable views */}
           {initializing ? (
             <LoadingScreen />

@@ -126,13 +126,13 @@ export function QuestList(): JSX.Element {
 
   if (loading) {
     return (
-      <section className="glass-panel p-4">
+      <section className="glass-panel p-8">
         <div className="animate-pulse">
           <div className="h-6 bg-[var(--sl-bg-elevated)] rounded w-48 mb-4" />
-          <div className="space-y-3">
-            <div className="h-12 bg-[var(--sl-bg-elevated)] rounded" />
-            <div className="h-12 bg-[var(--sl-bg-elevated)] rounded" />
-            <div className="h-12 bg-[var(--sl-bg-elevated)] rounded" />
+          <div className="space-y-4">
+            <div className="h-14 bg-[var(--sl-bg-elevated)] rounded" />
+            <div className="h-14 bg-[var(--sl-bg-elevated)] rounded" />
+            <div className="h-14 bg-[var(--sl-bg-elevated)] rounded" />
           </div>
         </div>
       </section>
@@ -142,7 +142,7 @@ export function QuestList(): JSX.Element {
   return (
     <section>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <h2 className="text-[var(--text-h1)] font-semibold uppercase tracking-wider text-[var(--sl-text-primary)]">
           Today's Quests
           {totalTodayCount > 0 && (
@@ -169,7 +169,7 @@ export function QuestList(): JSX.Element {
           <>
             {/* Empty State */}
             {todayQuests.length === 0 && (
-              <div className="glass-panel p-8 text-center">
+              <div className="glass-panel p-10 text-center">
                 <p className="text-[var(--sl-text-muted)] text-[var(--text-body)]">
                   No quests for today. Add a quest to get started!
                 </p>
@@ -178,7 +178,7 @@ export function QuestList(): JSX.Element {
 
             {/* Active Quests - Card Grid */}
             {activeQuests.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                 <AnimatePresence mode="popLayout">
                   {activeQuests.map((quest) => {
                     const animation = xpAnimations.find(
@@ -213,8 +213,8 @@ export function QuestList(): JSX.Element {
 
             {/* Completed Quests - Compact List */}
             {completedQuests.length > 0 && (
-              <div className="glass-panel p-3">
-                <div className="flex items-center gap-2 mb-2 px-2">
+              <div className="glass-panel p-6">
+                <div className="flex items-center gap-2 mb-4 px-2">
                   <span className="text-[var(--text-xs)] uppercase text-[var(--sl-text-muted)] tracking-wider font-semibold">
                     Completed ({completedQuests.length})
                   </span>

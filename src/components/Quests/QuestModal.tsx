@@ -2,6 +2,7 @@
 // Modal for creating and editing quests
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useQuests } from "@/hooks/useQuests";
 import { useSkills } from "@/hooks/useSkills";
@@ -134,7 +135,9 @@ export function QuestModal({
 
   if (!isOpen) return null;
 
-  return (
+  // Use portal to render outside of transformed parent (SwipeableViews)
+  // This ensures fixed positioning works correctly relative to viewport
+  return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center z-50 bg-black/70"
       onClick={(e) => {
@@ -324,6 +327,7 @@ export function QuestModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

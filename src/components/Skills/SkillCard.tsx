@@ -35,7 +35,7 @@ export function SkillCard({ skill, onSelect }: SkillCardProps): JSX.Element {
 
   return (
     <motion.div
-      className={`glass-panel p-5 lg:p-6 cursor-pointer ${isFlashing ? "level-up-flash" : ""}`}
+      className={`glass-panel p-6 lg:p-8 cursor-pointer ${isFlashing ? "level-up-flash" : ""}`}
       style={{
         borderLeftWidth: "3px",
         borderLeftColor: skill.color,

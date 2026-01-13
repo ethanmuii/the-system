@@ -38,7 +38,7 @@ export function PlayerStats(): JSX.Element {
 
   if (loading) {
     return (
-      <div className="glass-panel p-6 animate-pulse">
+      <div className="glass-panel p-8 animate-pulse">
         <div className="h-8 bg-[var(--sl-bg-elevated)] rounded w-1/3 mb-4" />
         <div className="h-4 bg-[var(--sl-bg-elevated)] rounded w-full mb-4" />
         <div className="h-4 bg-[var(--sl-bg-elevated)] rounded w-2/3" />
@@ -48,7 +48,7 @@ export function PlayerStats(): JSX.Element {
 
   if (!player) {
     return (
-      <div className="glass-panel p-6">
+      <div className="glass-panel p-8">
         <p className="text-[var(--sl-danger)]">Failed to load player data</p>
       </div>
     );
@@ -58,7 +58,7 @@ export function PlayerStats(): JSX.Element {
   const xpNeeded = nextLevelXP - currentLevelXP;
 
   return (
-    <div className="glass-panel p-6">
+    <div className="glass-panel p-8">
       {/* Row 1: Level + Health */}
       <div className="flex justify-between items-start mb-6">
         <div className={isFlashing ? "level-up-flash" : ""}>

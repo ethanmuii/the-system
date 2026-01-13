@@ -28,7 +28,7 @@ export function QuestCard({
 
   return (
     <motion.div
-      className="glass-panel p-4 lg:p-5 cursor-pointer"
+      className="glass-panel p-6 lg:p-8 cursor-pointer"
       style={{
         borderLeftWidth: "3px",
         borderLeftColor: skill?.color ?? "var(--sl-blue-glow)",
@@ -40,21 +40,21 @@ export function QuestCard({
       layout
     >
       {/* Header: Title + Actions */}
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="text-[var(--text-h3)] lg:text-[var(--text-h2)] font-semibold text-[var(--sl-text-primary)] pr-2 leading-tight">
+      <div className="flex items-start justify-between mb-4">
+        <h3 className="text-[var(--text-h3)] lg:text-[var(--text-h2)] font-semibold text-[var(--sl-text-primary)] pr-3 leading-snug">
           {quest.title}
         </h3>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => onEdit(quest.id)}
-            className="p-1.5 rounded hover:bg-[var(--sl-bg-elevated)] transition-colors"
+            className="p-2 rounded hover:bg-[var(--sl-bg-elevated)] transition-colors"
             title="Edit quest"
           >
             <Pencil size={14} className="text-[var(--sl-text-muted)]" />
           </button>
           <button
             onClick={() => onDelete(quest.id)}
-            className="p-1.5 rounded hover:bg-[var(--sl-danger)]/20 transition-colors"
+            className="p-2 rounded hover:bg-[var(--sl-danger)]/20 transition-colors"
             title="Delete quest"
           >
             <Trash2 size={14} className="text-[var(--sl-text-muted)] hover:text-[var(--sl-danger)]" />
@@ -63,9 +63,9 @@ export function QuestCard({
       </div>
 
       {/* Metadata Row: Difficulty + XP + Skill */}
-      <div className="flex items-center flex-wrap gap-2 mb-4">
+      <div className="flex items-center flex-wrap gap-2.5 mb-5">
         <span
-          className="text-[var(--text-xs)] font-semibold uppercase px-2 py-0.5 rounded"
+          className="text-[var(--text-xs)] font-semibold uppercase px-2.5 py-1 rounded"
           style={{
             backgroundColor: `color-mix(in srgb, ${difficultyColor} 20%, transparent)`,
             color: difficultyColor,
@@ -79,7 +79,7 @@ export function QuestCard({
         </span>
         {skill && (
           <div
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-[var(--text-xs)]"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[var(--text-xs)]"
             style={{
               backgroundColor: `${skill.color}20`,
               border: `1px solid ${skill.color}40`,

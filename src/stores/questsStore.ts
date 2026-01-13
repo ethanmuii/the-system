@@ -126,7 +126,7 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
         isCompleted: false,
         isRecurring: data.isRecurring,
         recurrencePattern: data.recurrencePattern,
-        dueDate: new Date(data.dueDate),
+        dueDate: parseLocalDate(data.dueDate),
         completedAt: null,
         createdAt: new Date(),
         xpReward: QUEST_XP[data.difficulty],
@@ -205,7 +205,7 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
         title: data.title ?? quest.title,
         skillId: data.skillId ?? quest.skillId,
         difficulty: data.difficulty ?? quest.difficulty,
-        dueDate: data.dueDate ? new Date(data.dueDate) : quest.dueDate,
+        dueDate: data.dueDate ? parseLocalDate(data.dueDate) : quest.dueDate,
         isRecurring: data.isRecurring ?? quest.isRecurring,
         recurrencePattern:
           data.recurrencePattern !== undefined
@@ -287,6 +287,11 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
 
       // Award XP to the associated skill and get level-up info
       const xpResult = await useSkillsStore.getState().addXPToSkill(quest.skillId, xpAwarded, 0);
+
+      // Update today's XP in player store (for the "Today +X XP" display)
+      usePlayerStore.setState((state) => ({
+        todayXP: state.todayXP + xpAwarded,
+      }));
 
       // Update local quest state
       const updatedQuest: Quest = {

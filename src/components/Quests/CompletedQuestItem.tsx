@@ -16,7 +16,7 @@ export function CompletedQuestItem({
 }: CompletedQuestItemProps): JSX.Element {
   return (
     <motion.div
-      className="flex items-center gap-3 py-2 px-3 opacity-60"
+      className="flex items-center gap-4 py-3 px-4 opacity-60"
       initial={{ opacity: 0 }}
       animate={{ opacity: 0.6 }}
       layout
