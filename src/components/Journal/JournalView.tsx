@@ -118,7 +118,7 @@ export function JournalView(): JSX.Element {
             "
             value={entry?.content ?? ""}
             onChange={(e) => updateContent(e.target.value)}
-            placeholder="Did you get better today? Did what you accomplish today align with your goals, priorities, and skills? If any, what were roadblocks you faced today?"
+            placeholder="Did you get better today? Did what you accomplished today align with your goals, priorities, and skills? If any, what were roadblocks you faced today?"
           />
 
           {/* Save Status Indicator */}
