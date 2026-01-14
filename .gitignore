@@ -32,4 +32,5 @@ npm-debug.log*
 
 # Internal .md files
 SPEC.md 
-CLAUDE.md
+CLAUDE.md# Local Claude settings
+.claude/settings.local.json

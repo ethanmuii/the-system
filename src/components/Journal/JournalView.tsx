@@ -118,7 +118,7 @@ export function JournalView(): JSX.Element {
             "
             value={entry?.content ?? ""}
             onChange={(e) => updateContent(e.target.value)}
-            placeholder="What did you accomplish today? What are your thoughts and reflections?"
+            placeholder="Did you get better today? Did what you accomplish today align with your goals, priorities, and skills? If any, what were roadblocks you faced today?"
           />
 
           {/* Save Status Indicator */}
@@ -141,10 +141,6 @@ export function JournalView(): JSX.Element {
           </div>
         </div>
 
-        {/* Help Text */}
-        <p className="mt-4 text-[var(--text-xs)] text-[var(--sl-text-muted)] text-center">
-          Your journal auto-saves 1 second after you stop typing.
-        </p>
       </div>
 
       {/* Bottom spacer - golden ratio 62% */}
