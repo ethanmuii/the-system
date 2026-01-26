@@ -65,9 +65,9 @@ export function QuestModal({
           setWeeklyDays([]);
         }
       } else {
-        // Create mode - reset form with first skill as default
+        // Create mode - reset form with no skill selected
         setTitle("");
-        setSkillId(activeSkills[0]?.id ?? "");
+        setSkillId("");
         setDifficulty("medium");
         setDueDate(getTodayString());
         setIsRecurring(false);
@@ -191,8 +191,11 @@ export function QuestModal({
               border border-[var(--sl-border-subtle)]
               focus:outline-none focus:border-[var(--sl-blue-glow)]"
           >
+            <option value="" disabled className="bg-[var(--sl-bg-dark)]">
+              Select a skill...
+            </option>
             {activeSkills.map((skill) => (
-              <option key={skill.id} value={skill.id}>
+              <option key={skill.id} value={skill.id} className="bg-[var(--sl-bg-dark)]">
                 {skill.icon} {skill.name}
               </option>
             ))}

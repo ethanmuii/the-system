@@ -1,7 +1,7 @@
 // src/types/index.ts
 
 export type Difficulty = "easy" | "medium" | "hard";
-export type TimeLogSource = "timer" | "manual";
+export type TimeLogSource = "timer" | "manual" | "quest";
 export type View = "dashboard" | "timer" | "journal";
 
 export interface Player {

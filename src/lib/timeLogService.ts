@@ -129,3 +129,29 @@ export async function getTodayTotalSeconds(): Promise<number> {
   );
   return result[0]?.total ?? 0;
 }
+
+/**
+ * Log quest XP to time_logs (for todayXP persistence across refreshes)
+ * Quest completions have duration_seconds=0 since they don't track time
+ */
+export async function logQuestXP(
+  skillId: string,
+  xpEarned: number
+): Promise<TimeLog> {
+  const id = generateId();
+
+  await execute(
+    `INSERT INTO time_logs (id, skill_id, duration_seconds, xp_earned, source, logged_at)
+     VALUES (?, ?, 0, ?, 'quest', CURRENT_TIMESTAMP)`,
+    [id, skillId, xpEarned]
+  );
+
+  return {
+    id,
+    skillId,
+    durationSeconds: 0,
+    xpEarned,
+    source: "quest",
+    loggedAt: new Date(),
+  };
+}

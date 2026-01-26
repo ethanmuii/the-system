@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { TitleBar } from "@/components/common/TitleBar";
 import { ToastContainer } from "@/components/common/Toast";
 import { QuitConfirmDialog } from "@/components/common/QuitConfirmDialog";
+import { RefreshConfirmDialog } from "@/components/common/RefreshConfirmDialog";
 import { SwipeableViews } from "@/components/common/SwipeableViews";
 import { NavArrow } from "@/components/common/NavArrow";
 import { Dashboard } from "@/components/Dashboard";
@@ -279,6 +280,9 @@ function App(): JSX.Element {
 
           {/* Quit confirmation dialog - shows when trying to quit with active timer */}
           <QuitConfirmDialog />
+
+          {/* Refresh confirmation dialog - shows when trying to refresh with active timer */}
+          <RefreshConfirmDialog />
         </div>
       </div>
     </div>

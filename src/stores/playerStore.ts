@@ -21,9 +21,10 @@ interface PlayerDbRow {
   updated_at: string;
 }
 
-// Time log row for today's XP calculation
-interface TimeLogXpRow {
+// Time log row for today's XP and hours calculation
+interface TimeLogRow {
   xp_earned: number;
+  duration_seconds: number;
 }
 
 /**
@@ -52,6 +53,7 @@ interface PlayerStore {
   loading: boolean;
   error: string | null;
   todayXP: number;
+  todayHours: number;
 
   // Actions
   fetchPlayer: () => Promise<void>;
@@ -66,6 +68,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   loading: true,
   error: null,
   todayXP: 0,
+  todayHours: 0,
 
   fetchPlayer: async () => {
     set({ loading: true, error: null });
@@ -81,15 +84,17 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 
       const player = mapDbRowToPlayer(rows[0]);
 
-      // Calculate today's XP from time_logs
+      // Calculate today's XP and hours from time_logs
       const today = getTodayString();
-      const logs = await query<TimeLogXpRow>(
-        "SELECT xp_earned FROM time_logs WHERE DATE(logged_at) = ?",
+      const logs = await query<TimeLogRow>(
+        "SELECT xp_earned, duration_seconds FROM time_logs WHERE DATE(logged_at) = ?",
         [today]
       );
       const todayXP = logs.reduce((sum, log) => sum + log.xp_earned, 0);
+      const todaySeconds = logs.reduce((sum, log) => sum + log.duration_seconds, 0);
+      const todayHours = todaySeconds / 3600;
 
-      set({ player, todayXP, loading: false });
+      set({ player, todayXP, todayHours, loading: false });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch player";

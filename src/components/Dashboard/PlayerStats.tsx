@@ -20,6 +20,7 @@ export function PlayerStats(): JSX.Element {
     nextLevelXP,
     streakMultiplier,
     todayXP,
+    todayHours,
   } = usePlayer();
 
   // Track level-up flash animation
@@ -90,16 +91,22 @@ export function PlayerStats(): JSX.Element {
         </div>
       </div>
 
-      {/* Row 2: Streak + Today's XP */}
+      {/* Row 2: Streak + Today's Stats */}
       <div className="flex justify-between items-center">
         <StreakDisplay days={player.currentStreak} multiplier={streakMultiplier} />
         <div className="text-right">
           <span className="text-[var(--text-small)] text-[var(--sl-text-secondary)] block">
             Today
           </span>
-          <span className="text-[var(--text-h3)] font-semibold text-[var(--sl-blue-ice)]">
-            +<AnimatedNumber value={todayXP} formatter={formatXP} storageKey="player-todayXP" /> XP
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-h3)] font-semibold text-[var(--sl-text-secondary)]">
+              {todayHours.toFixed(1)}h
+            </span>
+            <span className="text-[var(--sl-text-muted)]">|</span>
+            <span className="text-[var(--text-h3)] font-semibold text-[var(--sl-blue-ice)]">
+              +<AnimatedNumber value={todayXP} formatter={formatXP} storageKey="player-todayXP" /> XP
+            </span>
+          </div>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { QUEST_XP, getStreakMultiplier, DEBUFF_MULTIPLIER } from "@/lib/xpCalcul
 import { parseLocalDate } from "@/lib/dateUtils";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { usePlayerStore } from "@/stores/playerStore";
+import { logQuestXP } from "@/lib/timeLogService";
 import type { Quest, Difficulty, RecurrencePattern, CreateQuestInput, UpdateQuestInput } from "@/types";
 
 // Database row type (snake_case)
@@ -288,7 +289,10 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
       // Award XP to the associated skill and get level-up info
       const xpResult = await useSkillsStore.getState().addXPToSkill(quest.skillId, xpAwarded, 0);
 
-      // Update today's XP in player store (for the "Today +X XP" display)
+      // Persist quest XP to time_logs (so todayXP survives refresh)
+      await logQuestXP(quest.skillId, xpAwarded);
+
+      // Update today's XP in player store (optimistic update for immediate UI)
       usePlayerStore.setState((state) => ({
         todayXP: state.todayXP + xpAwarded,
       }));

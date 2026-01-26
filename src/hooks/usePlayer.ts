@@ -17,6 +17,7 @@ interface UsePlayerReturn {
   loading: boolean;
   error: string | null;
   todayXP: number;
+  todayHours: number;
 
   // Actions from store
   fetchPlayer: () => Promise<void>;
@@ -65,6 +66,7 @@ export function usePlayer(): UsePlayerReturn {
     loading: store.loading,
     error: store.error,
     todayXP: store.todayXP,
+    todayHours: store.todayHours,
 
     // Actions
     fetchPlayer: store.fetchPlayer,

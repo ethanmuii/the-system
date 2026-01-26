@@ -1,7 +1,7 @@
 // src/components/Timer/TimerControls.tsx
-// Timer control buttons: Start, Pause, Resume, Stop
+// Timer control buttons: Start, Pause, Resume, Stop, Cancel
 
-import { Play, Pause, Square } from "lucide-react";
+import { Play, Pause, Square, X } from "lucide-react";
 
 interface TimerControlsProps {
   isRunning: boolean;
@@ -11,6 +11,7 @@ interface TimerControlsProps {
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
+  onCancel: () => void;
 }
 
 export function TimerControls({
@@ -21,6 +22,7 @@ export function TimerControls({
   onPause,
   onResume,
   onStop,
+  onCancel,
 }: TimerControlsProps): JSX.Element {
   if (!isRunning) {
     // Not running - show Start button
@@ -38,9 +40,18 @@ export function TimerControls({
     );
   }
 
-  // Running - show Pause/Resume and Stop buttons
+  // Running - show Cancel, Pause/Resume, and Stop buttons
   return (
-    <div className="flex justify-center gap-4">
+    <div className="flex justify-center gap-3">
+      {/* Cancel button - destructive, less prominent */}
+      <button
+        onClick={onCancel}
+        className="btn-ghost flex items-center gap-2 text-[var(--sl-text-muted)] hover:text-red-400 hover:border-red-400/50"
+      >
+        <X size={18} />
+        Cancel
+      </button>
+
       {isPaused ? (
         <button onClick={onResume} className="btn-primary flex items-center gap-2">
           <Play size={18} />

@@ -12,6 +12,7 @@ import { TimerControls } from "./TimerControls";
 import { SkillSelector } from "./SkillSelector";
 import { ManualTimeEntry } from "./ManualTimeEntry";
 import { RecoveryQuestBanner } from "./RecoveryQuestBanner";
+import { CancelConfirmDialog } from "./CancelConfirmDialog";
 import {
   secondsToHours,
   TIME_XP_RATE,
@@ -30,6 +31,7 @@ import {
 export function TimerView(): JSX.Element {
   const [pendingSkillId, setPendingSkillId] = useState<string | null>(null);
   const [recoveryAccumulated, setRecoveryAccumulated] = useState(0);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const {
     isRunning,
@@ -43,6 +45,7 @@ export function TimerView(): JSX.Element {
     pause,
     resume,
     stop,
+    reset,
   } = useTimer();
 
   const { addXPToSkill, activeSkills } = useSkills();
@@ -103,6 +106,12 @@ export function TimerView(): JSX.Element {
 
     // Award XP to skill (updates skill totalXP and totalSeconds)
     const xpResult = await addXPToSkill(stoppedSkillId, xpEarned, totalSeconds);
+
+    // Update todayXP and todayHours immediately (so UI updates without refresh)
+    usePlayerStore.setState((state) => ({
+      todayXP: state.todayXP + xpEarned,
+      todayHours: state.todayHours + totalSeconds / 3600,
+    }));
 
     // Show XP toast
     addToast({
@@ -169,6 +178,12 @@ export function TimerView(): JSX.Element {
       // Award XP to skill
       const xpResult = await addXPToSkill(pendingSkillId, xpEarned, totalSeconds);
 
+      // Update todayXP and todayHours immediately (so UI updates without refresh)
+      usePlayerStore.setState((state) => ({
+        todayXP: state.todayXP + xpEarned,
+        todayHours: state.todayHours + totalSeconds / 3600,
+      }));
+
       // Show toast
       addToast({
         message: `+${formatXP(xpEarned)} XP logged for ${xpResult.skillName}!`,
@@ -189,6 +204,27 @@ export function TimerView(): JSX.Element {
     },
     [pendingSkillId, player, addXPToSkill, addToast]
   );
+
+  // Handle cancel button click - show confirmation dialog
+  const handleCancelClick = useCallback(() => {
+    setShowCancelDialog(true);
+  }, []);
+
+  // Handle cancel confirmation - discard session without saving
+  const handleConfirmCancel = useCallback(() => {
+    reset();
+    setPendingSkillId(null);
+    setShowCancelDialog(false);
+    addToast({
+      message: "Timer session discarded",
+      type: "info",
+    });
+  }, [reset, addToast]);
+
+  // Handle cancel dialog dismissal
+  const handleDismissCancelDialog = useCallback(() => {
+    setShowCancelDialog(false);
+  }, []);
 
   // Determine which skill ID to show in selector
   const displaySkillId = isRunning ? skillId : pendingSkillId;
@@ -243,6 +279,7 @@ export function TimerView(): JSX.Element {
             onPause={pause}
             onResume={resume}
             onStop={handleStop}
+            onCancel={handleCancelClick}
           />
 
           {/* Session info */}
@@ -301,6 +338,15 @@ export function TimerView(): JSX.Element {
 
       {/* Bottom spacer - golden ratio 62% */}
       <div className="flex-[0.62] w-full" />
+
+      {/* Cancel Confirmation Dialog */}
+      <CancelConfirmDialog
+        isOpen={showCancelDialog}
+        skillName={selectedSkill?.name ?? "Timer"}
+        elapsedSeconds={elapsedSeconds}
+        onCancel={handleDismissCancelDialog}
+        onConfirm={handleConfirmCancel}
+      />
     </div>
   );
 }
