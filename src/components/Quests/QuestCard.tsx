@@ -2,12 +2,13 @@
 // Card-style quest display for active (incomplete) quests
 
 import { motion } from "framer-motion";
-import { Check, Pencil, Trash2 } from "lucide-react";
+import { Check, Pencil, Trash2, Loader2 } from "lucide-react";
 import type { Quest, Skill } from "@/types";
 
 interface QuestCardProps {
   quest: Quest;
   skill: Skill | undefined;
+  isCompleting?: boolean;
   onComplete: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -16,6 +17,7 @@ interface QuestCardProps {
 export function QuestCard({
   quest,
   skill,
+  isCompleting = false,
   onComplete,
   onEdit,
   onDelete,
@@ -96,10 +98,22 @@ export function QuestCard({
       {/* Complete Button */}
       <button
         onClick={() => onComplete(quest.id)}
-        className="w-full btn-primary flex items-center justify-center gap-2"
+        disabled={isCompleting}
+        className={`w-full btn-primary flex items-center justify-center gap-2 ${
+          isCompleting ? "opacity-70 cursor-not-allowed" : ""
+        }`}
       >
-        <Check size={16} />
-        Complete Quest
+        {isCompleting ? (
+          <>
+            <Loader2 size={16} className="animate-spin" />
+            Completing...
+          </>
+        ) : (
+          <>
+            <Check size={16} />
+            Complete Quest
+          </>
+        )}
       </button>
     </motion.div>
   );

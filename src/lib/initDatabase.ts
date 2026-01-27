@@ -8,6 +8,9 @@ interface PlayerCountRow {
   count: number;
 }
 
+// Singleton lock to prevent concurrent initialization
+let initializationPromise: Promise<void> | null = null;
+
 /**
  * Check if database has been initialized (player row exists)
  */
@@ -76,14 +79,14 @@ async function createTables(): Promise<void> {
     )
   `);
 
-  // Time logs table
+  // Time logs table (includes 'quest' source type for quest XP tracking)
   await execute(`
     CREATE TABLE IF NOT EXISTS time_logs (
       id TEXT PRIMARY KEY,
       skill_id TEXT NOT NULL REFERENCES skills(id),
       duration_seconds INTEGER NOT NULL,
       xp_earned INTEGER NOT NULL,
-      source TEXT NOT NULL CHECK (source IN ('timer', 'manual')),
+      source TEXT NOT NULL CHECK (source IN ('timer', 'manual', 'quest')),
       logged_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -160,9 +163,58 @@ async function seedInitialData(): Promise<void> {
 }
 
 /**
- * Initialize the database (create tables and seed data if needed)
+ * Run migrations for existing databases.
+ * Ensures all tables exist even for databases created before certain features were added.
  */
-export async function initializeDatabase(): Promise<void> {
+async function runMigrations(): Promise<void> {
+  // Check what time_logs tables exist
+  const tables = await query<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('time_logs', 'time_logs_new')"
+  );
+  const tableNames = tables.map((t) => t.name);
+
+  const hasTimeLogs = tableNames.includes("time_logs");
+  const hasTimeLogsNew = tableNames.includes("time_logs_new");
+
+  if (!hasTimeLogs && hasTimeLogsNew) {
+    // One-time fix: rename time_logs_new to time_logs
+    console.log("Renaming time_logs_new to time_logs...");
+    await execute("ALTER TABLE time_logs_new RENAME TO time_logs");
+    await execute(
+      "CREATE INDEX IF NOT EXISTS idx_time_logs_skill_id ON time_logs(skill_id)"
+    );
+    await execute(
+      "CREATE INDEX IF NOT EXISTS idx_time_logs_logged_at ON time_logs(logged_at)"
+    );
+    console.log("time_logs table renamed successfully");
+  } else if (!hasTimeLogs) {
+    // Create time_logs if it doesn't exist (for old databases)
+    console.log("Creating missing time_logs table...");
+    await execute(`
+      CREATE TABLE time_logs (
+        id TEXT PRIMARY KEY,
+        skill_id TEXT NOT NULL REFERENCES skills(id),
+        duration_seconds INTEGER NOT NULL,
+        xp_earned INTEGER NOT NULL,
+        source TEXT NOT NULL CHECK (source IN ('timer', 'manual', 'quest')),
+        logged_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await execute(
+      "CREATE INDEX IF NOT EXISTS idx_time_logs_skill_id ON time_logs(skill_id)"
+    );
+    await execute(
+      "CREATE INDEX IF NOT EXISTS idx_time_logs_logged_at ON time_logs(logged_at)"
+    );
+    console.log("time_logs table created successfully");
+  }
+  // If hasTimeLogs is true, table exists with correct name - nothing to do
+}
+
+/**
+ * Internal initialization logic
+ */
+async function doInitializeDatabase(): Promise<void> {
   const initialized = await isDbInitialized();
 
   if (!initialized) {
@@ -172,5 +224,29 @@ export async function initializeDatabase(): Promise<void> {
     console.log("Database initialized successfully");
   } else {
     console.log("Database already initialized");
+    // Run migrations for existing databases
+    await runMigrations();
+  }
+}
+
+/**
+ * Initialize the database (create tables and seed data if needed).
+ * Uses a singleton lock to prevent concurrent initialization.
+ */
+export async function initializeDatabase(): Promise<void> {
+  // If initialization is already in progress, wait for it
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // Start initialization and store the promise
+  initializationPromise = doInitializeDatabase();
+
+  try {
+    await initializationPromise;
+  } finally {
+    // Clear the lock after completion (success or failure)
+    // This allows retry on next app load if it failed
+    initializationPromise = null;
   }
 }

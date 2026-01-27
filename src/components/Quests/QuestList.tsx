@@ -28,6 +28,7 @@ export function QuestList(): JSX.Element {
     deleteQuest,
     selectQuest,
     selectedQuest,
+    isCompletingQuest,
   } = useQuests();
 
   const { skills } = useSkills();
@@ -190,6 +191,7 @@ export function QuestList(): JSX.Element {
                         <QuestCard
                           quest={quest}
                           skill={getSkill(quest.skillId)}
+                          isCompleting={isCompletingQuest(quest.id)}
                           onComplete={handleComplete}
                           onEdit={handleEdit}
                           onDelete={handleDelete}

@@ -3,11 +3,10 @@
 
 import { create } from "zustand";
 import { query, execute, generateId } from "@/lib/db";
-import { QUEST_XP, getStreakMultiplier, DEBUFF_MULTIPLIER } from "@/lib/xpCalculator";
+import { QUEST_XP, getStreakMultiplier, DEBUFF_MULTIPLIER, calculateLevel, visualProgress } from "@/lib/xpCalculator";
 import { parseLocalDate } from "@/lib/dateUtils";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { usePlayerStore } from "@/stores/playerStore";
-import { logQuestXP } from "@/lib/timeLogService";
 import type { Quest, Difficulty, RecurrencePattern, CreateQuestInput, UpdateQuestInput } from "@/types";
 
 // Database row type (snake_case)
@@ -64,6 +63,7 @@ interface QuestsStore {
   loading: boolean;
   error: string | null;
   selectedQuestId: string | null;
+  completingQuestIds: Set<string>; // Lock: quests currently being completed
 
   // Actions
   fetchQuests: () => Promise<void>;
@@ -72,6 +72,7 @@ interface QuestsStore {
   deleteQuest: (id: string) => Promise<void>;
   completeQuest: (id: string) => Promise<CompleteQuestResult>;
   selectQuest: (id: string | null) => void;
+  isCompletingQuest: (id: string) => boolean; // Check if quest completion is in progress
 }
 
 export const useQuestsStore = create<QuestsStore>((set, get) => ({
@@ -79,6 +80,11 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
   loading: true,
   error: null,
   selectedQuestId: null,
+  completingQuestIds: new Set<string>(),
+
+  isCompletingQuest: (id: string) => {
+    return get().completingQuestIds.has(id);
+  },
 
   fetchQuests: async () => {
     set({ loading: true, error: null });
@@ -249,75 +255,155 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
   },
 
   completeQuest: async (id: string) => {
-    const { quests } = get();
-    const questIndex = quests.findIndex((q) => q.id === id);
+    const { quests, completingQuestIds } = get();
 
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 1: SYNCHRONOUS VALIDATION & LOCK ACQUISITION
+    // This prevents race conditions from double-clicks
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Check if already completing this quest (prevents double-click race condition)
+    if (completingQuestIds.has(id)) {
+      throw new Error("Quest completion already in progress");
+    }
+
+    const questIndex = quests.findIndex((q) => q.id === id);
     if (questIndex === -1) {
-      console.error("Quest not found:", id);
       throw new Error("Quest not found");
     }
 
     const quest = quests[questIndex];
-
     if (quest.isCompleted) {
-      console.error("Quest already completed:", id);
       throw new Error("Quest already completed");
     }
 
-    // Get player state for streak multiplier and debuff
+    // Acquire lock SYNCHRONOUSLY before any async operations
+    const newCompletingIds = new Set(completingQuestIds);
+    newCompletingIds.add(id);
+    set({ completingQuestIds: newCompletingIds });
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 2: OPTIMISTIC UI UPDATE
+    // Mark quest complete immediately for responsive UI
+    // ═══════════════════════════════════════════════════════════════════
+
+    const completedAt = new Date();
+    const optimisticQuest: Quest = {
+      ...quest,
+      isCompleted: true,
+      completedAt,
+    };
+
+    const optimisticQuests = [...quests];
+    optimisticQuests[questIndex] = optimisticQuest;
+    set({ quests: optimisticQuests });
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 3: CALCULATE XP
+    // ═══════════════════════════════════════════════════════════════════
+
     const playerState = usePlayerStore.getState();
     const player = playerState.player;
-
-    const streakMultiplier = player
-      ? getStreakMultiplier(player.currentStreak)
-      : 1.0;
+    const streakMultiplier = player ? getStreakMultiplier(player.currentStreak) : 1.0;
     const isDebuffed = player?.isDebuffed ?? false;
 
-    // Calculate XP with multipliers
     let xpAwarded = Math.floor(QUEST_XP[quest.difficulty] * streakMultiplier);
     if (isDebuffed) {
       xpAwarded = Math.floor(xpAwarded * DEBUFF_MULTIPLIER);
     }
 
+    // Get current skill state for level calculation
+    const skillsState = useSkillsStore.getState();
+    const skill = skillsState.skills.find((s) => s.id === quest.skillId);
+    if (!skill) {
+      // Rollback optimistic update
+      set({ quests, completingQuestIds });
+      throw new Error("Skill not found for quest");
+    }
+
+    const oldLevel = skill.level;
+    const newTotalXP = skill.totalXP + xpAwarded;
+    const newLevel = calculateLevel(newTotalXP);
+    const leveledUp = newLevel > oldLevel;
+    const timeLogId = generateId();
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 4: DATABASE OPERATIONS
+    // Execute sequentially - the synchronous lock prevents race conditions
+    // ═══════════════════════════════════════════════════════════════════
+
     try {
-      // Update quest in database
+      // 4a. Mark quest as completed
       await execute(
-        "UPDATE quests SET is_completed = 1, completed_at = CURRENT_TIMESTAMP WHERE id = ?",
-        [id]
+        "UPDATE quests SET is_completed = 1, completed_at = ? WHERE id = ?",
+        [completedAt.toISOString(), id]
       );
 
-      // Award XP to the associated skill and get level-up info
-      const xpResult = await useSkillsStore.getState().addXPToSkill(quest.skillId, xpAwarded, 0);
+      // 4b. Award XP to skill
+      await execute(
+        "UPDATE skills SET total_xp = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [newTotalXP, quest.skillId]
+      );
 
-      // Persist quest XP to time_logs (so todayXP survives refresh)
-      await logQuestXP(quest.skillId, xpAwarded);
+      // 4c. Log quest XP to time_logs (for todayXP persistence)
+      await execute(
+        `INSERT INTO time_logs (id, skill_id, duration_seconds, xp_earned, source, logged_at)
+         VALUES (?, ?, 0, ?, 'quest', CURRENT_TIMESTAMP)`,
+        [timeLogId, quest.skillId, xpAwarded]
+      );
 
-      // Update today's XP in player store (optimistic update for immediate UI)
+      // ═════════════════════════════════════════════════════════════════
+      // STEP 5: UPDATE ZUSTAND STATE (only after successful transaction)
+      // ═════════════════════════════════════════════════════════════════
+
+      // Update skill in skillsStore
+      const updatedSkill = {
+        ...skill,
+        totalXP: newTotalXP,
+        level: newLevel,
+        progress: visualProgress(newTotalXP),
+      };
+
+      const updatedSkills = [...skillsState.skills];
+      const skillIndex = updatedSkills.findIndex((s) => s.id === quest.skillId);
+      if (skillIndex !== -1) {
+        updatedSkills[skillIndex] = updatedSkill;
+        useSkillsStore.setState({ skills: updatedSkills });
+      }
+
+      // Update today's XP in player store
       usePlayerStore.setState((state) => ({
         todayXP: state.todayXP + xpAwarded,
       }));
 
-      // Update local quest state
-      const updatedQuest: Quest = {
-        ...quest,
-        isCompleted: true,
-        completedAt: new Date(),
-      };
-
-      const updatedQuests = [...quests];
-      updatedQuests[questIndex] = updatedQuest;
-
-      set({ quests: updatedQuests });
+      // Release lock (quest stays completed)
+      const finalCompletingIds = new Set(get().completingQuestIds);
+      finalCompletingIds.delete(id);
+      set({ completingQuestIds: finalCompletingIds });
 
       return {
         xpAwarded,
         skillId: quest.skillId,
-        skillName: xpResult.skillName,
-        leveledUp: xpResult.leveledUp,
-        newLevel: xpResult.newLevel,
+        skillName: skill.name,
+        leveledUp,
+        newLevel,
       };
     } catch (err) {
-      console.error("Failed to complete quest:", err);
+      // ═════════════════════════════════════════════════════════════════
+      // STEP 6: ROLLBACK ON ERROR
+      // Restore original state if transaction failed
+      // ═════════════════════════════════════════════════════════════════
+
+      console.error("Failed to complete quest (transaction rolled back):", err);
+
+      // Rollback optimistic quest update
+      set({ quests });
+
+      // Release lock
+      const rollbackCompletingIds = new Set(get().completingQuestIds);
+      rollbackCompletingIds.delete(id);
+      set({ completingQuestIds: rollbackCompletingIds });
+
       throw err;
     }
   },

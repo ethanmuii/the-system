@@ -19,6 +19,7 @@ interface UseQuestsReturn {
   deleteQuest: (id: string) => Promise<void>;
   completeQuest: (id: string) => Promise<CompleteQuestResult>;
   selectQuest: (id: string | null) => void;
+  isCompletingQuest: (id: string) => boolean;
 
   // Computed values
   todayQuests: Quest[];
@@ -79,6 +80,7 @@ export function useQuests(): UseQuestsReturn {
     deleteQuest: store.deleteQuest,
     completeQuest: store.completeQuest,
     selectQuest: store.selectQuest,
+    isCompletingQuest: store.isCompletingQuest,
 
     // Computed values
     todayQuests: sortedTodayQuests,

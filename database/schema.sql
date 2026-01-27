@@ -44,13 +44,13 @@ CREATE TABLE IF NOT EXISTS quests (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Time logs
+-- Time logs (tracks XP earned from timer, manual entry, or quest completion)
 CREATE TABLE IF NOT EXISTS time_logs (
   id TEXT PRIMARY KEY,
   skill_id TEXT NOT NULL REFERENCES skills(id),
   duration_seconds INTEGER NOT NULL,
   xp_earned INTEGER NOT NULL,
-  source TEXT NOT NULL CHECK (source IN ('timer', 'manual')),
+  source TEXT NOT NULL CHECK (source IN ('timer', 'manual', 'quest')),
   logged_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
