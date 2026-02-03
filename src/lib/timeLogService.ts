@@ -8,7 +8,7 @@ import {
   getStreakMultiplier,
   DEBUFF_MULTIPLIER,
 } from "@/lib/xpCalculator";
-import { getTodayString } from "@/lib/dateUtils";
+import { getTodayString, getLocalDateTimeString } from "@/lib/dateUtils";
 import type { TimeLog, TimeLogSource } from "@/types";
 
 // Database row type (snake_case)
@@ -76,11 +76,15 @@ export async function logTime(
     isDebuffed
   );
 
-  // Insert into database
+  // Generate timestamp in JavaScript to ensure consistent timezone handling.
+  // Previously used datetime('now', 'localtime') which could use a different
+  // timezone context than JavaScript in the Tauri app, causing day boundary issues.
+  const loggedAt = getLocalDateTimeString();
+
   await execute(
     `INSERT INTO time_logs (id, skill_id, duration_seconds, xp_earned, source, logged_at)
-     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-    [id, skillId, durationSeconds, xpEarned, source]
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [id, skillId, durationSeconds, xpEarned, source, loggedAt]
   );
 
   const timeLog: TimeLog = {
@@ -140,10 +144,13 @@ export async function logQuestXP(
 ): Promise<TimeLog> {
   const id = generateId();
 
+  // Generate timestamp in JavaScript for consistent timezone handling
+  const loggedAt = getLocalDateTimeString();
+
   await execute(
     `INSERT INTO time_logs (id, skill_id, duration_seconds, xp_earned, source, logged_at)
-     VALUES (?, ?, 0, ?, 'quest', CURRENT_TIMESTAMP)`,
-    [id, skillId, xpEarned]
+     VALUES (?, ?, 0, ?, 'quest', ?)`,
+    [id, skillId, xpEarned, loggedAt]
   );
 
   return {

@@ -4,7 +4,7 @@
 import { create } from "zustand";
 import { query, execute, generateId } from "@/lib/db";
 import { QUEST_XP, getStreakMultiplier, DEBUFF_MULTIPLIER, calculateLevel, visualProgress } from "@/lib/xpCalculator";
-import { parseLocalDate } from "@/lib/dateUtils";
+import { parseLocalDate, getLocalDateTimeString } from "@/lib/dateUtils";
 import { useSkillsStore } from "@/stores/skillsStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Quest, Difficulty, RecurrencePattern, CreateQuestInput, UpdateQuestInput } from "@/types";
@@ -346,10 +346,12 @@ export const useQuestsStore = create<QuestsStore>((set, get) => ({
       );
 
       // 4c. Log quest XP to time_logs (for todayXP persistence)
+      // Use JavaScript-generated timestamp for consistent timezone handling
+      const timeLogLoggedAt = getLocalDateTimeString();
       await execute(
         `INSERT INTO time_logs (id, skill_id, duration_seconds, xp_earned, source, logged_at)
-         VALUES (?, ?, 0, ?, 'quest', CURRENT_TIMESTAMP)`,
-        [timeLogId, quest.skillId, xpAwarded]
+         VALUES (?, ?, 0, ?, 'quest', ?)`,
+        [timeLogId, quest.skillId, xpAwarded, timeLogLoggedAt]
       );
 
       // ═════════════════════════════════════════════════════════════════
